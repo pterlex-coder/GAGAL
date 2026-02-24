@@ -141,22 +141,44 @@
             animation: titlePulse 2s ease-in-out infinite;
         }
         .matchmaking-spinner {
-            width: 80px; height: 80px;
-            border: 8px solid rgba(255,255,255,0.3);
-            border-top: 8px solid #fff;
+            width: 70px; height: 70px;
+            border: 7px solid rgba(255,255,255,0.3);
+            border-top: 7px solid #fff;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 30px auto;
+            margin: 0 auto 16px;
         }
-        .matchmaking-status { font-size: 1.3em; margin: 20px 0; min-height: 30px; }
+        .matchmaking-waiting-box {
+            background: rgba(30, 20, 80, 0.55);
+            backdrop-filter: blur(14px);
+            border: 2px solid rgba(255,255,255,0.18);
+            border-radius: 28px;
+            padding: 36px 56px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.35);
+            margin-bottom: 40px;
+        }
+        .matchmaking-waiting-title {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.4);
+            margin: 0;
+        }
+        .matchmaking-status { font-size: 1.1em; color: rgba(255,255,255,0.85); margin: 0; min-height: 24px; }
         .btn-cancel {
-            margin-top: 20px; padding: 15px 40px;
-            font-size: 1.1em;
-            background: rgba(244,67,54,0.8);
-            color: white; border: none; border-radius: 10px;
+            margin-top: 8px; padding: 14px 50px;
+            font-size: 1.15em; font-weight: bold;
+            background: linear-gradient(135deg, #f44336 0%, #e53935 100%);
+            color: white; border: none; border-radius: 50px;
             cursor: pointer; transition: all 0.3s;
+            box-shadow: 0 6px 20px rgba(244,67,54,0.5);
+            letter-spacing: 1px;
         }
-        .btn-cancel:hover { background: rgba(244,67,54,1); transform: translateY(-2px); }
+        .btn-cancel:hover { background: linear-gradient(135deg, #e53935 0%, #c62828 100%); transform: translateY(-2px); box-shadow: 0 10px 28px rgba(244,67,54,0.6); }
         .btn-start {
             padding: 22px 80px; font-size: 1.8em; font-weight: bold;
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
@@ -196,6 +218,7 @@
         .menu-nav-scroll-inner .btn-encyclopedia {
             flex: 0 0 160px;
             width: 160px;
+            justify-content: center;
         }
         .btn-ensiklopedia-style {
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
@@ -742,11 +765,12 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: #fff; font-size: 0.95em; font-weight: bold;
             padding: 12px 22px; border-radius: 30px;
-            margin-top: 0; display: inline-flex; align-items: center; gap: 6px;
+            margin-top: 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
             width: auto; border: none;
             box-shadow: 0 4px 14px rgba(102,126,234,0.4);
             letter-spacing: 0.3px; cursor: pointer; transition: all 0.2s;
             white-space: nowrap;
+            text-align: center;
         }
         .btn-encyclopedia:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(102,126,234,0.6); }
         .btn-leaderboard {
@@ -1479,11 +1503,13 @@
                 </div>
             </div>
 
-            <div id="matchmaking-waiting" style="display:none;">
-                <h2>🔍 Mencari Lawan...</h2>
-                <div class="matchmaking-spinner"></div>
-                <p class="matchmaking-status" id="queue-status">Menunggu pemain lain...</p>
-                <button class="btn-cancel" onclick="cancelMatchmaking()">❌ Batal</button>
+            <div id="matchmaking-waiting" style="display:none;flex-direction:column;align-items:center;width:100%;padding-bottom:40px;">
+                <div class="matchmaking-waiting-box">
+                    <div class="matchmaking-spinner"></div>
+                    <h2 class="matchmaking-waiting-title">🔍 Mencari Lawan...</h2>
+                    <p class="matchmaking-status" id="queue-status">Menunggu pemain lain...</p>
+                    <button class="btn-cancel" onclick="cancelMatchmaking()">✖ Batal</button>
+                </div>
             </div>
 
             <div id="match-starting" style="display:none;">
@@ -3478,7 +3504,8 @@
                 soundEffects.bgMusic2.play().catch(() => {});
             } catch(e) {}
             DOM.matchmakingScreen.querySelector('#matchmaking-idle').style.display = 'none';
-            DOM.matchmakingScreen.querySelector('#matchmaking-waiting').style.display = 'block';
+            DOM.matchmakingScreen.querySelector('#matchmaking-waiting').style.display = 'flex';
+            DOM.matchmakingScreen.style.justifyContent = 'center';
 
             ws = new WebSocket(SERVER_URL);
 
@@ -3532,6 +3559,7 @@
             DOM.matchmakingScreen.querySelector('#matchmaking-idle').style.display = 'flex';
             DOM.matchmakingScreen.querySelector('#matchmaking-waiting').style.display = 'none';
             DOM.matchmakingScreen.querySelector('#match-starting').style.display = 'none';
+            DOM.matchmakingScreen.style.justifyContent = 'flex-end';
             soundEffects.bgMusic2.pause();
             soundEffects.bgMusic2.currentTime = 0;
             soundEffects.bgMusic.play().catch(() => {});
