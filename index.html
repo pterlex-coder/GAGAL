@@ -2172,23 +2172,47 @@
         let currentUser = null;
         let currentNickname = null;
 
-        // Animasi teks pada firebase-loading screen
-        (function animateLoadingText() {
+        // Jalankan pre-loading steps di firebase-loading screen (sebelum login)
+        var preloadingDone = false;
+        (function runEarlyPreload() {
             const el = document.querySelector('#firebase-loading div:last-child');
             if (!el) return;
-            const msgs = ['Memuat...', 'Menyiapkan game...', 'Menghubungkan server...', 'Hampir siap...'];
+            const steps = [
+                'Memuat 190 kartu provinsi...',
+                'Memuat gambar dan aset...',
+                'Menyiapkan sound effects...',
+                'Mempersiapkan sistem game...',
+                'Validasi data kartu...',
+                'Hampir selesai...'
+            ];
             let i = 0;
-            setInterval(() => { el.textContent = msgs[i++ % msgs.length]; }, 900);
+            const iv = setInterval(() => {
+                if (i < steps.length) {
+                    el.textContent = steps[i++];
+                } else {
+                    clearInterval(iv);
+                    el.textContent = 'Siap!';
+                    preloadingDone = true;
+                }
+            }, 800);
         })();
 
         auth.onAuthStateChanged(async (user) => {
-            // Sembunyikan loading overlay Firebase dengan delay agar tidak berkedip
-            setTimeout(() => {
-                const fl = document.getElementById('firebase-loading');
-                fl.style.transition = 'opacity 0.5s ease';
-                fl.style.opacity = '0';
-                setTimeout(() => { fl.style.display = 'none'; }, 500);
-            }, 800);
+            // Tunggu preloading selesai, baru sembunyikan firebase-loading
+            function hideFirebaseLoading(cb) {
+                function tryHide() {
+                    if (preloadingDone) {
+                        const fl = document.getElementById('firebase-loading');
+                        fl.style.transition = 'opacity 0.6s ease';
+                        fl.style.opacity = '0';
+                        setTimeout(() => { fl.style.display = 'none'; if(cb) cb(); }, 600);
+                    } else {
+                        setTimeout(tryHide, 100);
+                    }
+                }
+                tryHide();
+            }
+            hideFirebaseLoading();
             
             if (user) {
                 currentUser = user;
@@ -2381,7 +2405,18 @@
                 lsDel(LS.ROOM_ID);
                 lsDel(LS.PLAYER_ID);
                 lsDel(LS.GAME_ACTIVE);
-                showPreloadingScreen(true); // ← true, tampilkan animasi loading normal
+                // Loading sudah dilakukan sebelum login, langsung tampilkan tombol PLAY
+                showPreloadingScreen(false);
+                setTimeout(() => {
+                    const infoEl = document.getElementById('pre-loading-info');
+                    const spinnerEl = document.getElementById('pre-loading-spinner');
+                    const subtitleEl = document.querySelector('.pre-loading-subtitle');
+                    const playBtn = document.getElementById('btn-play');
+                    if (infoEl) infoEl.style.display = 'none';
+                    if (spinnerEl) spinnerEl.style.display = 'none';
+                    if (subtitleEl) subtitleEl.style.display = 'none';
+                    if (playBtn) playBtn.style.display = 'block';
+                }, 300);
             }
         }
 
