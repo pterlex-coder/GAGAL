@@ -97,6 +97,12 @@
         @keyframes playButtonAppear { from{transform:scale(0);opacity:0;} to{transform:scale(1);opacity:1;} }
         .btn-play:hover { transform: translateY(-5px) scale(1.05); box-shadow: 0 15px 40px rgba(0,0,0,0.5); }
 
+
+        /* Saat game aktif, body pakai gradient bukan bg1.png */
+        body:has(.game-container.active) {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            background-image: none !important;
+        }
         /* ============================================ */
         /* MATCHMAKING SCREEN */
         /* ============================================ */
@@ -167,7 +173,7 @@
             margin: 0 auto;
             padding: 10px;
         }
-        .game-container.active { display: flex; }
+        .game-container.active { display: flex; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; }
 
         .main-content {
             display: grid;
