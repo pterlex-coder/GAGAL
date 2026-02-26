@@ -1782,14 +1782,14 @@
                                 <tr><td style="text-align:left;padding:4px;">💙 Rare★</td><td>8%</td><td>12%</td><td>13%</td><td>14%</td><td>10%</td></tr>
                                 <tr style="background:rgba(255,255,255,0.05);"><td style="text-align:left;padding:4px;">💠 Rare</td><td>12%</td><td>15%</td><td>12%</td><td>13%</td><td>8%</td></tr>
                                 <tr><td style="text-align:left;padding:4px;">💚 Uncommon</td><td>16%</td><td>18%</td><td>13%</td><td>10%</td><td>5%</td></tr>
-                                <tr style="background:rgba(255,255,255,0.05);"><td style="text-align:left;padding:4px;">🍀 nCommon</td><td>18%</td><td>15%</td><td>10%</td><td>7%</td><td>3%</td></tr>
+                                <tr style="background:rgba(255,255,255,0.05);"><td style="text-align:left;padding:4px;">🍀 Uncommon+</td><td>18%</td><td>15%</td><td>10%</td><td>7%</td><td>3%</td></tr>
                                 <tr><td style="text-align:left;padding:4px;">🟢 Common+</td><td>19%</td><td>9.5%</td><td>8%</td><td>3.5%</td><td>1.5%</td></tr>
                                 <tr style="background:rgba(255,255,255,0.05);"><td style="text-align:left;padding:4px;">⚪ Common</td><td>18%</td><td>7.5%</td><td>6%</td><td>2.5%</td><td>0.5%</td></tr>
                             </tbody>
                         </table>
                     </div>
                     <div class="enc-rule-text" style="margin-top:10px;">
-                        💡 <strong>Perlu diingat:</strong> Persentase ini hanya peluang — jika kartu Mythic sudah tidak tersisa di tumpukan, kamu tidak akan bisa mendapatkannya meskipun di Level 5. Klik tombol <strong>ℹ️</strong> di sebelah Draw Card untuk cek level & progress-mu saat ini!
+                        💡 <strong>Perlu diingat:</strong> Persentase ini hanya peluang — jika kartu dari suatu rarity sudah tidak tersisa di tumpukan, kamu tidak akan bisa mendapatkannya meskipun sudah Level 5. Ini berlaku untuk semua rarity, bukan hanya Mythic. Klik tombol <strong>ℹ️</strong> di sebelah Draw Card untuk cek level & progress-mu saat ini!
                     </div>
                 </div>
 
@@ -4012,6 +4012,7 @@
                     // Reset save flags agar tidak bocor dari game sebelumnya
                     pendingClientSaveRank = null;
                     hasGameOverSaved = false;
+                    _endGameShown = false;
                     currentRoomId = data.roomId;
                     myPlayerId = data.playerId;
                     
@@ -4463,8 +4464,12 @@
         let pendingClientSaveRank = null;
         // Flag untuk kasus surrender → goToHome sebelum GAME_OVER diterima
         let hasGameOverSaved = false;
+        // Guard agar endGame() hanya berjalan sekali per pertandingan
+        let _endGameShown = false;
 
         function endGame(finalRankings) {
+            if (_endGameShown) return; // cegah pemanggilan ganda (misal dari WS stale)
+            _endGameShown = true;
             lsClear();
 
             // Tutup surrender-choice & match-result modal jika masih terbuka
@@ -4538,6 +4543,8 @@
                                     <div class="rank-pts-new">${newPtsLabel}</div>
                                 </div>
                             </div>`;
+                        // Hapus kartu lama jika ada (safety net)
+                        DOM.rankings.parentElement.querySelectorAll('.rank-change-card').forEach(el => el.remove());
                         DOM.rankings.after(card);
                     }).catch(() => {});
                 }
@@ -4719,6 +4726,10 @@
             const _roomId = currentRoomId;
             stopClientKeepAlive();
             ws = null; // null-kan segera agar tidak ada handler lain yang pakai
+            // Putus handler segera agar pesan stale (GAME_OVER, GAME_STATE_UPDATE)
+            // tidak masuk lagi selama jeda sebelum _ws.close() dieksekusi
+            if (_ws) { _ws.onmessage = null; _ws.onclose = null; _ws.onerror = null; }
+            _endGameShown = false; // reset untuk pertandingan berikutnya
             if (_ws && _ws.readyState === WebSocket.OPEN && _roomId) {
                 try { _ws.send(JSON.stringify({ type: 'LEAVE_MATCH', roomId: _roomId })); } catch(e) {}
                 const _closeDelay = _pendingWinSave ? 5000 : 200;
@@ -5874,7 +5885,7 @@
             { key:'rarestar',    label:'💙 Rare★' },
             { key:'rare',        label:'💠 Rare' },
             { key:'uncommon',    label:'💚 Uncommon' },
-            { key:'uncommonplus',label:'🍀 nCommon' },
+            { key:'uncommonplus',label:'🍀 Uncommon+' },
             { key:'commonplus',  label:'🟢 Common+' },
             { key:'common',      label:'⚪ Common' },
         ];
