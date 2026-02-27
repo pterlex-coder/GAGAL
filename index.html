@@ -682,6 +682,32 @@
         @keyframes spin { 0%{transform:rotate(0deg);} 100%{transform:rotate(360deg);} }
         @keyframes titlePulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.05);} }
 
+        /* TOAST NOTIFICATIONS */
+        #toast-container {
+            position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+            display: flex; flex-direction: column-reverse; align-items: center;
+            gap: 10px; z-index: 99999; pointer-events: none;
+        }
+        .toast {
+            min-width: 260px; max-width: 380px; padding: 13px 22px;
+            border-radius: 12px; font-size: 0.92em; font-weight: bold; color: #fff;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.4); pointer-events: all;
+            text-align: center; line-height: 1.4; word-break: break-word;
+            animation: toastIn .25s ease;
+        }
+        .toast-error   { background: linear-gradient(135deg,#e53935,#c62828); }
+        .toast-warning { background: linear-gradient(135deg,#fb8c00,#e65100); }
+        .toast-success { background: linear-gradient(135deg,#43a047,#2e7d32); }
+        .toast-info    { background: linear-gradient(135deg,#667eea,#764ba2); }
+        @keyframes toastIn  { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
+        @keyframes toastOut { from{opacity:1;transform:translateY(0);} to{opacity:0;transform:translateY(20px);} }
+
+        /* Matchmaking countdown */
+        .matchmaking-bot-countdown {
+            font-size: 0.78em; color: rgba(255,255,255,0.5);
+            margin-top: 8px; text-align: center; letter-spacing: 0.02em;
+        }
+
         /* ============================================ */
         /* AUTH SCREEN (Login & Register) */
         /* ============================================ */
@@ -1644,6 +1670,7 @@
                     <div class="matchmaking-spinner"></div>
                     <h2 class="matchmaking-waiting-title">🔍 Mencari Lawan...</h2>
                     <p class="matchmaking-status" id="queue-status">Menunggu pemain lain...</p>
+                    <p class="matchmaking-bot-countdown" id="matchmaking-bot-countdown" style="display:none;"></p>
                     <button class="btn-cancel" onclick="cancelMatchmaking()">✖ Batal</button>
                 </div>
             </div>
@@ -2203,7 +2230,7 @@
 
             <!-- PANEL KIRI: LAWAN -->
             <div class="opponents-panel" id="opponents-panel">
-                <div class="opponents-title">🤖 Lawan</div>
+                <div class="opponents-title">🛡️ Lawan 🛡️</div>
                 <div style="margin-bottom:8px; padding:10px; background:rgba(0,0,0,0.2); border-radius:8px; text-align:center;">
                     <div style="font-size:0.85em; margin-bottom:5px;">📋 Tersisa: <strong id="draw-pile-count-2">0</strong></div>
                     <div style="font-size:0.85em;">📥 Terpakai: <strong id="discard-pile-count-2">0</strong></div>
@@ -2721,18 +2748,60 @@
                 lsDel(LS.ROOM_ID);
                 lsDel(LS.PLAYER_ID);
                 lsDel(LS.GAME_ACTIVE);
-                // Loading sudah dilakukan sebelum login, langsung tampilkan tombol PLAY
+                // Tidak ada localStorage — coba cari room aktif di server via userUid
+                // (untuk support login di device berbeda)
                 showPreloadingScreen(false);
-                setTimeout(() => {
-                    const infoEl = document.getElementById('pre-loading-info');
-                    const spinnerEl = document.getElementById('pre-loading-spinner');
-                    const subtitleEl = document.querySelector('.pre-loading-subtitle');
-                    const playBtn = document.getElementById('btn-play');
-                    if (infoEl) infoEl.style.display = 'none';
-                    if (spinnerEl) spinnerEl.style.display = 'none';
-                    if (subtitleEl) subtitleEl.style.display = 'none';
-                    if (playBtn) playBtn.style.display = 'block';
-                }, 300);
+                findMyRoomOnServer(user.uid);
+            }
+        }
+
+        // Tampilkan tombol PLAY di home screen
+        function showHomeButtons() {
+            const infoEl = document.getElementById('pre-loading-info');
+            const spinnerEl = document.getElementById('pre-loading-spinner');
+            const subtitleEl = document.querySelector('.pre-loading-subtitle');
+            const playBtn = document.getElementById('btn-play');
+            if (infoEl) infoEl.style.display = 'none';
+            if (spinnerEl) spinnerEl.style.display = 'none';
+            if (subtitleEl) subtitleEl.style.display = 'none';
+            if (playBtn) playBtn.style.display = 'block';
+        }
+
+        // Cari room aktif berdasarkan userUid — untuk login di device berbeda
+        function findMyRoomOnServer(userUid) {
+            let resolved = false;
+            let tempWs = null;
+
+            const done = (found, roomId, playerId) => {
+                if (resolved) return;
+                resolved = true;
+                clearTimeout(findRoomTimeout);
+                if (tempWs) { tempWs.onclose = null; try { tempWs.close(); } catch(e) {} tempWs = null; }
+                if (found) {
+                    lsSet(LS.ROOM_ID, roomId);
+                    lsSet(LS.PLAYER_ID, playerId);
+                    lsSet(LS.GAME_ACTIVE, 'true');
+                    addLog('🔍 Pertandingan aktif ditemukan! Menyambung kembali...');
+                    reconnectToGame(roomId, playerId);
+                } else {
+                    showHomeButtons();
+                }
+            };
+
+            const findRoomTimeout = setTimeout(() => done(false), 5000);
+
+            try {
+                tempWs = new WebSocket(SERVER_URL);
+                tempWs.onopen  = () => tempWs.send(JSON.stringify({ type: 'FIND_MY_ROOM', userUid }));
+                tempWs.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'ROOM_FOUND')     done(true, data.roomId, data.playerId);
+                    else if (data.type === 'ROOM_NOT_FOUND') done(false);
+                };
+                tempWs.onerror = () => done(false);
+                tempWs.onclose = () => done(false);
+            } catch(e) {
+                done(false);
             }
         }
 
@@ -3127,8 +3196,9 @@
             let reconnected = { value: false };
 
             ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                if (data.type === 'GAME_STATE_UPDATE') {
+                let data;
+                try { data = JSON.parse(event.data); } catch(e) { return; }
+                if (data.type === 'GAME_STATE_UPDATE' || data.type === 'GAME_STARTED') {
                     reconnected.value = true;
                     reconnectAttempts = 0; // reset karena berhasil
                     currentRoomId = roomId;
@@ -3155,7 +3225,7 @@
                         });
                     } catch(e) {}
                     // Pindah ke onmessage normal
-                    ws.onmessage = (ev) => handleServerMessage(JSON.parse(ev.data));
+                    ws.onmessage = (ev) => { try { handleServerMessage(JSON.parse(ev.data)); } catch(e) {} };
                 } else if (data.type === 'ERROR') {
                     addLog('❌ ' + data.message);
                     lsDel(LS.ROOM_ID); lsDel(LS.PLAYER_ID); lsDel(LS.GAME_ACTIVE);
@@ -3908,6 +3978,7 @@
             DOM.matchmakingScreen.querySelector('#matchmaking-idle').style.display = 'none';
             DOM.matchmakingScreen.querySelector('#matchmaking-waiting').style.display = 'flex';
             DOM.matchmakingScreen.style.justifyContent = 'center';
+            startMatchmakingCountdown();
 
             ws = new WebSocket(SERVER_URL);
 
@@ -3924,13 +3995,14 @@
             };
 
             ws.onmessage = (event) => {
-			    console.log("📨 RAW MESSAGE:", event.data); // ← TAMBAHKAN INI
-                const data = JSON.parse(event.data);
+                console.log("📨 RAW MESSAGE:", event.data);
+                let data;
+                try { data = JSON.parse(event.data); } catch(e) { return; }
                 handleServerMessage(data);
             };
 
             ws.onerror = () => {
-                alert("Gagal connect ke server! Coba lagi.");
+                showToast('❌ Gagal connect ke server! Coba lagi.', 'error');
                 cancelMatchmaking();
             };
 
@@ -3952,6 +4024,7 @@
         }
 
         function cancelMatchmaking() {
+            stopMatchmakingCountdown();
             if (ws) {
                 try { ws.send(JSON.stringify({ type: 'LEAVE_QUEUE' })); } catch(e) {}
                 ws.onclose = null; ws.onerror = null;
@@ -3976,6 +4049,7 @@
                     break;
 
                 case 'MATCH_STARTING':
+                    stopMatchmakingCountdown();
                     DOM.matchmakingScreen.querySelector('#matchmaking-waiting').style.display = 'none';
                     DOM.matchmakingScreen.querySelector('#match-starting').style.display = 'block';
                     break;
@@ -4047,7 +4121,7 @@
                     break;
 
                 case 'GAME_OVER':
-                    endGame(data.players);
+                    if (data.players) endGame(data.players);
                     break;
 
                 case 'STATS_SAVED':
@@ -4089,7 +4163,7 @@
                     break;
 
                 case 'ERROR':
-                    alert("❌ Error: " + data.message);
+                    showToast('❌ ' + data.message, 'error');
                     break;
 
                 case 'PING':
@@ -4222,6 +4296,51 @@
             const isImportant = message.includes('MENANG') || message.includes('dibebaskan') ||
                 message.includes('Force Pick') || message.includes('harus ambil');
             if (isImportant) showNotification(message);
+        }
+
+        // Toast notification — gantikan alert() di seluruh app
+        function showToast(message, type = 'info', duration = 3500) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const t = document.createElement('div');
+            t.className = `toast toast-${type}`;
+            t.textContent = message;
+            container.appendChild(t);
+            setTimeout(() => {
+                t.style.animation = 'toastOut .25s ease forwards';
+                setTimeout(() => t.remove(), 250);
+            }, duration);
+        }
+
+        // Matchmaking countdown — hitung mundur 30 detik sebelum bot masuk
+        let _matchmakingCountdownInterval = null;
+        function startMatchmakingCountdown() {
+            stopMatchmakingCountdown();
+            const el = document.getElementById('matchmaking-bot-countdown');
+            if (!el) return;
+            let secs = 30;
+            const update = () => {
+                el.textContent = secs > 0
+                    ? `⏳ Bot bergabung dalam ${secs} detik jika tidak ada pemain...`
+                    : '🤖 Menambahkan bot ke pertandingan...';
+            };
+            update();
+            el.style.display = 'block';
+            _matchmakingCountdownInterval = setInterval(() => {
+                secs--;
+                update();
+                if (secs <= 0) stopMatchmakingCountdown(false); // berhenti tapi tetap tampil pesan terakhir
+            }, 1000);
+        }
+        function stopMatchmakingCountdown(hide = true) {
+            if (_matchmakingCountdownInterval) {
+                clearInterval(_matchmakingCountdownInterval);
+                _matchmakingCountdownInterval = null;
+            }
+            if (hide) {
+                const el = document.getElementById('matchmaking-bot-countdown');
+                if (el) el.style.display = 'none';
+            }
         }
 
         function showNotification(message) {
@@ -5452,7 +5571,7 @@
                     btn.disabled = true;
                 }
             } catch(e) {
-                alert('Gagal mengirim permintaan teman.');
+                showToast('❌ Gagal mengirim permintaan teman.', 'error');
             }
         }
 
@@ -5468,7 +5587,7 @@
                 ]);
                 loadFriendsTab();
             } catch(e) {
-                alert('Gagal menerima permintaan teman.');
+                showToast('❌ Gagal menerima permintaan teman.', 'error');
             }
         }
 
@@ -5482,7 +5601,7 @@
                 ]);
                 loadFriendsTab();
             } catch(e) {
-                alert('Gagal menolak permintaan teman.');
+                showToast('❌ Gagal menolak permintaan teman.', 'error');
             }
         }
 
@@ -6165,5 +6284,8 @@
             });
         }
     </script>
+
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container"></div>
 </body>
 </html>
