@@ -244,6 +244,41 @@
             transition: background 0.2s;
         }
         .menu-nav-arrow:hover { background: rgba(255,255,255,0.35); }
+        @media (max-width: 560px) {
+            .menu-nav-scroll {
+                width: calc(2 * 120px + 10px);
+            }
+            .menu-nav-scroll-inner .btn-encyclopedia {
+                flex: 0 0 120px;
+                width: 120px;
+                padding: 12px 8px;
+                font-size: 0.82em;
+            }
+            .btn-start {
+                padding: 16px 40px;
+                font-size: 1.4em;
+            }
+        }
+        @media (max-width: 390px) {
+            .menu-nav-scroll {
+                width: calc(2 * 100px + 10px);
+            }
+            .menu-nav-scroll-inner .btn-encyclopedia {
+                flex: 0 0 100px;
+                width: 100px;
+                padding: 10px 6px;
+                font-size: 0.76em;
+            }
+            .btn-start {
+                padding: 14px 32px;
+                font-size: 1.2em;
+            }
+            .menu-nav-arrow {
+                width: 28px;
+                height: 28px;
+                font-size: 0.9em;
+            }
+        }
 
         /* ============================================ */
         /* GAME CONTAINER */
@@ -7227,22 +7262,28 @@
 
         // Nav bar scroll for menu buttons
         let _menuNavIndex = 0;
-        const _menuNavVisible = 3;
         function scrollMenuNav(dir) {
             const btns = document.querySelectorAll('#menu-nav-inner .btn-encyclopedia');
             const total = btns.length;
-            _menuNavIndex = Math.max(0, Math.min(_menuNavIndex + dir, total - _menuNavVisible));
-            const btnWidth = 160 + 10; // 160px button + 10px gap
-            document.getElementById('menu-nav-inner').style.transform = `translateX(-${_menuNavIndex * btnWidth}px)`;
-            // Update arrow visibility
+            const scrollEl = document.getElementById('menu-nav-scroll');
+            const inner = document.getElementById('menu-nav-inner');
+            if (!btns[0] || !scrollEl) return;
+            const btnWidth = btns[0].offsetWidth + 10; // button width + gap
+            const visible = Math.max(1, Math.floor((scrollEl.offsetWidth + 10) / btnWidth));
+            _menuNavIndex = Math.max(0, Math.min(_menuNavIndex + dir, total - visible));
+            inner.style.transform = `translateX(-${_menuNavIndex * btnWidth}px)`;
             const arrows = document.querySelectorAll('.menu-nav-arrow');
             arrows[0].style.visibility = _menuNavIndex === 0 ? 'hidden' : 'visible';
-            arrows[1].style.visibility = _menuNavIndex >= total - _menuNavVisible ? 'hidden' : 'visible';
+            arrows[1].style.visibility = _menuNavIndex >= total - visible ? 'hidden' : 'visible';
         }
-        // Init arrow states on load
+        // Init arrow states on load and re-sync on resize
         document.addEventListener('DOMContentLoaded', function() {
             const arrows = document.querySelectorAll('.menu-nav-arrow');
             if (arrows.length >= 2) arrows[0].style.visibility = 'hidden'; // hide left arrow initially
+        });
+        window.addEventListener('resize', function() {
+            _menuNavIndex = 0;
+            scrollMenuNav(0);
         });
 
         function showEncTab(tab) {
