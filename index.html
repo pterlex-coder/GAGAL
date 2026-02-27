@@ -6783,21 +6783,26 @@
                     el.innerHTML = '<div style="color:rgba(255,255,255,0.5);font-size:0.85em;">Belum ada teman. Tambah lewat menu Teman!</div>';
                     return;
                 }
-                const uids = Object.keys(snap.val());
-                const profiles = await Promise.all(
-                    uids.map(uid =>
+                const friends = snap.val();
+                const uids = Object.keys(friends);
+                const [profiles, presSnap] = await Promise.all([
+                    Promise.all(uids.map(uid =>
                         db.ref(`users/${uid}/nickname`).get().then(s => ({ uid, nickname: s.val() || 'Unknown' }))
-                    )
-                );
-                if (!profiles.length) {
-                    el.innerHTML = '<div style="color:rgba(255,255,255,0.5);font-size:0.85em;">Belum ada teman.</div>';
+                    )),
+                    db.ref('presence').get()
+                ]);
+                const presence = presSnap.exists() ? presSnap.val() : {};
+                // Hanya tampilkan teman yang sedang online
+                const onlineProfiles = profiles.filter(f => presence[f.uid]?.online === true);
+                if (!onlineProfiles.length) {
+                    el.innerHTML = '<div style="color:rgba(255,255,255,0.5);font-size:0.85em;">Tidak ada teman yang online.</div>';
                     return;
                 }
                 // Filter UIDs yang sudah diundang di slot lain
                 const alreadyInvited = [_partyFriendUid, _partyFriend2Uid].filter(Boolean);
-                const filteredProfiles = profiles.filter(f => !alreadyInvited.includes(f.uid));
+                const filteredProfiles = onlineProfiles.filter(f => !alreadyInvited.includes(f.uid));
                 if (!filteredProfiles.length) {
-                    el.innerHTML = '<div style="color:rgba(255,255,255,0.5);font-size:0.85em;">Semua teman sudah diundang.</div>';
+                    el.innerHTML = '<div style="color:rgba(255,255,255,0.5);font-size:0.85em;">Semua teman online sudah diundang.</div>';
                     return;
                 }
                 el.innerHTML = filteredProfiles.map(f => `
@@ -6927,7 +6932,9 @@
                 sigRef.onDisconnect().remove();
             }
 
-            closePartyLobby(true); // keepPartyId=true
+            // keepPartyId hanya jika ada teman yang sudah join
+            // Jika tidak ada → reset partyId agar host masuk antrian solo (bukan party queue)
+            closePartyLobby(friendCount > 0);
             startMatchmaking();
         }
 
@@ -7053,6 +7060,7 @@
         let _customInviteRef      = null;   // Firebase listener ref
         let _customPickerSlot     = null;   // which slot index is being filled
         let _pendingCustomJoin    = false;  // menunggu konfirmasi server setelah JOIN_CUSTOM_ROOM
+        let _isCustomRoomCreator  = false;  // true = user yang membuat room (bisa tambah/hapus bot)
         let _isCustomRoom         = false;  // in-game flag
         let _isSpectator          = false;  // in-game spectator flag
 
@@ -7070,6 +7078,7 @@
             _customRoomSlots = [];
             _customRoomId = null;
             _customPickerSlot = null;
+            _isCustomRoomCreator = true; // user ini yang membuat room
 
             // Pastikan WS tersambung sebelum kirim
             if (!ws || ws.readyState !== WebSocket.OPEN) {
@@ -7121,7 +7130,7 @@
         function _renderCustomRoomLobby() {
             const myName = currentNickname || lsGet(LS.NICKNAME) || 'Kamu';
             const isSpect = _customRoomRole === 'penonton';
-            const isHost = !isSpect; // Hanya pemain-host (slot 1) yang bisa tambah bot
+            const canManageBots = _isCustomRoomCreator; // pembuat room yang bisa tambah/hapus bot
 
             document.getElementById('custom-room-title').textContent = isSpect ? '👁️ Custom Room – Penonton' : '🎮 Custom Room – Pemain';
             document.getElementById('custom-room-subtitle').textContent = isSpect
@@ -7161,10 +7170,16 @@
                     // Hitung total slot terisi untuk cek kapasitas
                     const totalOccupied2 = (isSpect ? 0 : 1) + _customRoomSlots.filter(Boolean).length;
                     if (totalOccupied2 >= 4) continue; // kapasitas penuh, skip
-                    slot.innerHTML = `
-                        <div class="custom-slot-num">${i + 1}</div>
-                        <div class="custom-slot-empty-text">Klik untuk undang teman</div>`;
-                    slot.onclick = () => openCustomFriendPicker(friendIdx >= 0 ? friendIdx : 0);
+                    if (canManageBots) {
+                        slot.innerHTML = `
+                            <div class="custom-slot-num">${i + 1}</div>
+                            <div class="custom-slot-empty-text">Klik untuk undang teman</div>`;
+                        slot.onclick = () => openCustomFriendPicker(friendIdx >= 0 ? friendIdx : 0);
+                    } else {
+                        slot.innerHTML = `
+                            <div class="custom-slot-num">${i + 1}</div>
+                            <div class="custom-slot-empty-text" style="opacity:0.4;">Menunggu pemain...</div>`;
+                    }
                 }
                 slotsDiv.appendChild(slot);
             }
@@ -7177,24 +7192,9 @@
                 slot.innerHTML = `
                     <div class="custom-slot-num">🤖</div>
                     <div class="custom-slot-name">Bot Lv${b.level} <span style="font-size:0.75em;color:rgba(255,255,255,0.4);">(${b.level === 1 ? 'Mudah' : b.level === 2 ? 'Normal' : 'Sulit'})</span></div>
-                    ${isHost ? `<button class="custom-slot-clear" onclick="removeBotFromRoom(${bi})" title="Hapus bot">✖</button>` : ''}`;
+                    ${canManageBots ? `<button class="custom-slot-clear" onclick="removeBotFromRoom(${bi})" title="Hapus bot">✖</button>` : ''}`;
                 slotsDiv.appendChild(slot);
             });
-
-            // ── Tombol Tambah Bot (hanya host, jika ada ruang) ──
-            if (isHost) {
-                const totalOccupied = (isSpect ? 0 : 1) + _customRoomSlots.filter(Boolean).length;
-                const canAdd = totalOccupied < 4;
-                const botSection = document.createElement('div');
-                botSection.innerHTML = `
-                    <div class="bot-section-title">🤖 Tambah Bot (opsional)</div>
-                    <div class="bot-add-btns">
-                        <button class="btn-add-bot" onclick="addBotToRoom(1)" ${!canAdd ? 'disabled' : ''}>+ Bot Mudah (Lv1)</button>
-                        <button class="btn-add-bot" onclick="addBotToRoom(2)" ${!canAdd ? 'disabled' : ''}>+ Bot Normal (Lv2)</button>
-                        <button class="btn-add-bot" onclick="addBotToRoom(3)" ${!canAdd ? 'disabled' : ''}>+ Bot Sulit (Lv3)</button>
-                    </div>`;
-                slotsDiv.appendChild(botSection);
-            }
 
             // ── Update tombol Mulai ─────────────────────────────
             const humanCount = isSpect ? _customRoomSlots.filter(s => !s?.isBot).length : 1 + _customRoomSlots.filter(s => !s?.isBot && s).length;
@@ -7208,43 +7208,70 @@
             const picker = document.getElementById('custom-friend-picker');
             picker.style.display = 'block';
             const listDiv = document.getElementById('custom-friend-list');
-            listDiv.innerHTML = '<div style="color:rgba(255,255,255,0.4);font-size:0.82em;padding:6px;">Memuat teman...</div>';
 
+            // ── Bagian pilih Bot ──────────────────────────────
+            const isSpect = _customRoomRole === 'penonton';
+            const totalOccupied = (isSpect ? 0 : 1) + _customRoomSlots.filter(Boolean).length;
+            const canAddBot = totalOccupied < 4;
+            let html = `<div class="custom-friend-picker-title" style="margin-top:4px;">🤖 Isi slot dengan Bot:</div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">`;
+            if (canAddBot) {
+                html += `
+                    <button class="custom-friend-btn" style="background:rgba(251,191,36,0.15);border-color:rgba(251,191,36,0.5);color:#fbbf24;"
+                        onclick="addBotToRoomSlot(1)">🤖 Mudah (Lv1)</button>
+                    <button class="custom-friend-btn" style="background:rgba(251,191,36,0.15);border-color:rgba(251,191,36,0.5);color:#fbbf24;"
+                        onclick="addBotToRoomSlot(2)">🤖 Normal (Lv2)</button>
+                    <button class="custom-friend-btn" style="background:rgba(251,191,36,0.15);border-color:rgba(251,191,36,0.5);color:#fbbf24;"
+                        onclick="addBotToRoomSlot(3)">🤖 Sulit (Lv3)</button>`;
+            } else {
+                html += `<div style="color:rgba(255,255,255,0.35);font-size:0.78em;">Slot penuh (maks 4)</div>`;
+            }
+            html += `</div><div class="custom-friend-picker-title">👥 Undang teman online:</div>`;
+            listDiv.innerHTML = html + '<div style="color:rgba(255,255,255,0.4);font-size:0.82em;padding:4px 0;">⏳ Memuat...</div>';
+
+            // ── Bagian daftar teman online ────────────────────
             if (!currentUser) return;
             try {
                 const myFriendsSnap = await db.ref(`users/${currentUser.uid}/friends`).get();
+                const friendsSection = listDiv.querySelector('div:last-child');
                 if (!myFriendsSnap.exists()) {
-                    listDiv.innerHTML = '<div style="color:rgba(255,255,255,0.4);font-size:0.82em;padding:6px;">Belum ada teman online.</div>';
+                    if (friendsSection) friendsSection.textContent = 'Belum ada teman.';
                     return;
                 }
                 const friends = myFriendsSnap.val();
                 const presSnap = await db.ref('presence').get();
                 const presence = presSnap.exists() ? presSnap.val() : {};
-                // Already invited UIDs
-                const invitedUids = _customRoomSlots.filter(Boolean).map(s => s.uid);
-                invitedUids.push(currentUser.uid); // exclude self
+                const invitedUids = _customRoomSlots.filter(s => s && !s.isBot).map(s => s.uid);
+                invitedUids.push(currentUser.uid);
 
                 const onlineFriends = Object.entries(friends)
                     .filter(([uid]) => presence[uid]?.online && !invitedUids.includes(uid));
 
+                if (friendsSection) friendsSection.remove();
                 if (onlineFriends.length === 0) {
-                    listDiv.innerHTML = '<div style="color:rgba(255,255,255,0.4);font-size:0.82em;padding:6px;">Tidak ada teman online yang bisa diundang.</div>';
+                    listDiv.insertAdjacentHTML('beforeend', '<div style="color:rgba(255,255,255,0.4);font-size:0.82em;padding:4px 0;">Tidak ada teman online.</div>');
                     return;
                 }
-                listDiv.innerHTML = '';
                 for (const [uid] of onlineFriends) {
                     const friendName = friends[uid]?.name || uid;
                     const item = document.createElement('div');
                     item.className = 'custom-friend-item';
                     item.innerHTML = `
                         <div class="custom-friend-dot"></div>
-                        <div class="custom-friend-name">${friendName}</div>
-                        <button class="custom-friend-btn" onclick="inviteToCustomRoom('${uid}','${friendName.replace(/'/g,"\\'")}',${slotIndex})">Undang</button>`;
+                        <div class="custom-friend-name">${escHtml(friendName)}</div>
+                        <button class="custom-friend-btn" onclick="inviteToCustomRoom('${escHtml(uid)}','${escHtml(friendName).replace(/'/g,"\\'")}',${slotIndex})">Undang</button>`;
                     listDiv.appendChild(item);
                 }
             } catch(e) {
-                listDiv.innerHTML = '<div style="color:rgba(255,255,255,0.4);font-size:0.82em;padding:6px;">Gagal memuat daftar teman.</div>';
+                listDiv.insertAdjacentHTML('beforeend', '<div style="color:rgba(255,255,255,0.4);font-size:0.82em;padding:4px 0;">Gagal memuat.</div>');
             }
+        }
+
+        function addBotToRoomSlot(level) {
+            // Tutup picker lalu kirim ADD_BOT_SLOT ke server
+            document.getElementById('custom-friend-picker').style.display = 'none';
+            _customPickerSlot = null;
+            addBotToRoom(level);
         }
 
         async function inviteToCustomRoom(uid, name, slotIndex) {
@@ -7308,6 +7335,7 @@
             _customRoomSlots = [];
             _customPickerSlot = null;
             _pendingCustomJoin = false;
+            _isCustomRoomCreator = false;
             document.getElementById('custom-room-overlay').style.display = 'none';
             document.getElementById('custom-friend-picker').style.display = 'none';
         }
@@ -7415,6 +7443,7 @@
                 _customRoomRole = 'pemain';
                 _customRoomSlots = [];
                 _pendingCustomJoin = true;
+                _isCustomRoomCreator = false; // bergabung sebagai tamu, bukan pencipta room
                 showToast('⏳ Bergabung ke custom room...', 'info');
                 const myName = currentNickname || lsGet(LS.NICKNAME) || 'Player';
                 ws.send(JSON.stringify({
