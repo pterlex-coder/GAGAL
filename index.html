@@ -1544,6 +1544,135 @@
         }
         .btn-logout-settings:hover { box-shadow: 0 8px 24px rgba(244,67,54,0.6); }
 
+        /* ============================================ */
+        /* PARTY LOBBY POPUP                            */
+        /* ============================================ */
+        #party-lobby-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.65); z-index: 20000;
+            justify-content: center; align-items: center;
+            backdrop-filter: blur(4px);
+        }
+        .party-lobby-card {
+            background: linear-gradient(135deg, rgba(102,126,234,0.97) 0%, rgba(118,75,162,0.97) 100%);
+            border-radius: 22px;
+            padding: 28px 24px 22px;
+            width: min(390px, 92vw);
+            box-shadow: 0 24px 64px rgba(0,0,0,0.55);
+            border: 1px solid rgba(255,255,255,0.18);
+            position: relative;
+        }
+        .party-lobby-title {
+            color: #fff; font-size: 1.35em; font-weight: 800;
+            text-align: center; margin: 0 0 22px; letter-spacing: 0.5px;
+        }
+        .party-slots {
+            display: flex; align-items: stretch; gap: 10px;
+            justify-content: center; margin-bottom: 14px;
+        }
+        .party-slot {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; gap: 7px; padding: 16px 8px 14px;
+            border-radius: 16px; position: relative; transition: transform 0.15s, background 0.15s;
+            min-width: 0;
+        }
+        .party-slot.filled {
+            background: rgba(255,255,255,0.14);
+            border: 2px solid rgba(255,255,255,0.28); cursor: default;
+        }
+        .party-slot.empty {
+            background: rgba(255,255,255,0.07);
+            border: 2px dashed rgba(255,255,255,0.32); cursor: pointer;
+        }
+        .party-slot.empty:hover { transform: scale(1.03); background: rgba(255,255,255,0.13); }
+        .party-slot.waiting {
+            background: rgba(255,193,7,0.13);
+            border: 2px dashed rgba(255,193,7,0.5); cursor: default;
+        }
+        .party-slot.joined {
+            background: rgba(76,175,80,0.18);
+            border: 2px solid rgba(76,175,80,0.5); cursor: default;
+        }
+        .party-slot-icon { font-size: 2em; line-height: 1; }
+        .party-slot-name {
+            color: #fff; font-size: 0.8em; font-weight: 600;
+            text-align: center; word-break: break-word; line-height: 1.3;
+        }
+        .party-slot-sub {
+            color: rgba(255,255,255,0.6); font-size: 0.72em;
+            text-align: center; margin-top: 2px;
+        }
+        .party-slot-clear {
+            position: absolute; top: 7px; right: 7px;
+            background: rgba(244,67,54,0.75); border: none; color: #fff;
+            border-radius: 50%; width: 20px; height: 20px; font-size: 0.7em;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            padding: 0; line-height: 1; transition: background 0.15s;
+        }
+        .party-slot-clear:hover { background: rgba(244,67,54,1); }
+        .party-vs-divider {
+            color: rgba(255,255,255,0.4); font-weight: 800; font-size: 0.85em;
+            flex-shrink: 0; align-self: center; letter-spacing: 1px;
+        }
+        /* Friend picker inside popup */
+        #party-friend-picker {
+            background: rgba(0,0,0,0.2); border-radius: 14px;
+            padding: 12px; margin-bottom: 14px;
+        }
+        .party-picker-title {
+            color: rgba(255,255,255,0.65); font-size: 0.78em;
+            font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .party-friend-list {
+            max-height: 190px; overflow-y: auto;
+            display: flex; flex-direction: column; gap: 5px;
+        }
+        .party-friend-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 12px; border-radius: 10px;
+            background: rgba(255,255,255,0.1); cursor: pointer;
+            border: 1px solid transparent; width: 100%; color: #fff;
+            text-align: left; transition: background 0.15s, border-color 0.15s;
+            font-family: inherit;
+        }
+        .party-friend-item:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.2); }
+        .party-friend-avatar {
+            width: 30px; height: 30px; border-radius: 50%;
+            background: rgba(255,255,255,0.2); display: flex;
+            align-items: center; justify-content: center;
+            font-size: 0.95em; font-weight: 700; flex-shrink: 0;
+        }
+        .party-friend-name { font-size: 0.87em; font-weight: 600; }
+        /* Action buttons */
+        .party-lobby-actions { display: flex; gap: 10px; margin-top: 6px; }
+        .party-btn-cancel {
+            flex: 1; padding: 12px 8px; border-radius: 13px;
+            border: 1px solid rgba(255,255,255,0.28);
+            background: rgba(255,255,255,0.1); color: #fff;
+            font-size: 0.92em; cursor: pointer; transition: background 0.15s;
+            font-family: inherit; font-weight: 600;
+        }
+        .party-btn-cancel:hover { background: rgba(255,255,255,0.2); }
+        .party-btn-start {
+            flex: 2; padding: 12px 8px; border-radius: 13px; border: none;
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: #1a3a2a; font-size: 0.95em; font-weight: 800;
+            cursor: pointer; box-shadow: 0 4px 18px rgba(67,233,123,0.35);
+            transition: transform 0.15s, box-shadow 0.15s; font-family: inherit;
+        }
+        .party-btn-start:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(67,233,123,0.5); }
+        /* Party invite popup */
+        #party-invite-popup {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.65); z-index: 21000;
+            justify-content: center; align-items: center;
+            backdrop-filter: blur(4px);
+        }
+        .party-invite-msg {
+            color: rgba(255,255,255,0.85); text-align: center;
+            margin: 0 0 20px; font-size: 0.95em; line-height: 1.5;
+        }
+
     </style>
     <link rel="preload" as="image" href="gambar/background/bg1.png">
 </head>
@@ -1651,7 +1780,7 @@
     <div id="matchmaking-screen">
         <div class="matchmaking-container">
             <div id="matchmaking-idle" style="display:flex;flex-direction:column;align-items:center;width:100%;">
-                <button class="btn-start" onclick="startMatchmaking()">🎮 MAIN ONLINE</button>
+                <button class="btn-start" onclick="showPartyLobby()">🎮 MAIN ONLINE</button>
                 <div class="menu-bottom-nav">
                     <button class="menu-nav-arrow" onclick="scrollMenuNav(-1)">◀</button>
                     <div class="menu-nav-scroll" id="menu-nav-scroll">
@@ -2727,6 +2856,7 @@
             hideNicknameScreen();    // ← pastikan nickname screen juga tertutup
 
             showProfileBadge(user.uid, nickname);
+            _startPartyInviteListener(); // dengarkan undangan party dari teman
 
             // Cek & tandai presence (deteksi login di device lain)
             setupPresence(user, nickname);
@@ -4009,7 +4139,8 @@
                 ws.send(JSON.stringify({
                     type: 'JOIN_MATCHMAKING',
                     playerName: playerName,
-                    userUid: currentUser ? currentUser.uid : (lsGet(LS.USER_UID) || '') // ← TAMBAHKAN INI
+                    userUid: currentUser ? currentUser.uid : (lsGet(LS.USER_UID) || ''),
+                    partyId: _partyId || undefined
                 }));
 			    console.log("📤 Sent JOIN_MATCHMAKING as", playerName);
             };
@@ -4045,6 +4176,7 @@
 
         function cancelMatchmaking() {
             stopMatchmakingCountdown();
+            _partyId = null; // reset party state
             if (ws) {
                 try { ws.send(JSON.stringify({ type: 'LEAVE_QUEUE' })); } catch(e) {}
                 ws.onclose = null; ws.onerror = null;
@@ -6170,6 +6302,215 @@
         // Fungsi lama — tidak digunakan lagi (teman-tab-badge sudah dihapus)
         function updateFriendTabBadge() {}
 
+        // =============================================
+        // PARTY LOBBY
+        // =============================================
+        let _partyFriendUid  = null;
+        let _partyFriendName = null;
+        let _partyId         = null;
+        let _partyInviteData = null;
+        let _partyStatusRef  = null;
+        let _partyInviteRef  = null;
+
+        function showPartyLobby() {
+            // Reset state
+            _partyFriendUid = null; _partyFriendName = null; _partyId = null;
+            document.getElementById('party-friend-picker').style.display = 'none';
+            _resetSlot2();
+            // Isi slot 1 dengan nama player sendiri
+            const name = currentNickname || lsGet(LS.NICKNAME) || 'Kamu';
+            document.getElementById('pslot-1-name').textContent = name;
+            document.getElementById('pslot-1-icon').textContent = name.charAt(0).toUpperCase();
+            // Tampilkan overlay
+            document.getElementById('party-lobby-overlay').style.display = 'flex';
+        }
+
+        function closePartyLobby() {
+            document.getElementById('party-lobby-overlay').style.display = 'none';
+            document.getElementById('party-friend-picker').style.display = 'none';
+            // Batalkan invite yang sudah dikirim (jika ada)
+            if (_partyFriendUid && currentUser) {
+                db.ref(`users/${_partyFriendUid}/partyInvite`).remove().catch(() => {});
+            }
+            if (_partyStatusRef) { _partyStatusRef.off(); _partyStatusRef = null; }
+            _partyFriendUid = null; _partyFriendName = null; _partyId = null;
+        }
+
+        function togglePartyFriendPicker() {
+            if (_partyFriendUid) return; // slot sudah terisi
+            const picker = document.getElementById('party-friend-picker');
+            if (picker.style.display === 'none') {
+                picker.style.display = 'block';
+                _loadPartyFriendList();
+            } else {
+                picker.style.display = 'none';
+            }
+        }
+
+        async function _loadPartyFriendList() {
+            const el = document.getElementById('party-friend-list');
+            el.innerHTML = '<div style="color:rgba(255,255,255,0.5);font-size:0.85em;padding:6px 0;">⏳ Memuat...</div>';
+            if (!currentUser) {
+                el.innerHTML = '<div style="color:rgba(255,255,255,0.5);font-size:0.85em;">Login diperlukan.</div>';
+                return;
+            }
+            try {
+                const snap = await db.ref(`users/${currentUser.uid}/friends`).get();
+                if (!snap.exists()) {
+                    el.innerHTML = '<div style="color:rgba(255,255,255,0.5);font-size:0.85em;">Belum ada teman. Tambah lewat menu Teman!</div>';
+                    return;
+                }
+                const uids = Object.keys(snap.val());
+                const profiles = await Promise.all(
+                    uids.map(uid =>
+                        db.ref(`users/${uid}/nickname`).get().then(s => ({ uid, nickname: s.val() || 'Unknown' }))
+                    )
+                );
+                if (!profiles.length) {
+                    el.innerHTML = '<div style="color:rgba(255,255,255,0.5);font-size:0.85em;">Belum ada teman.</div>';
+                    return;
+                }
+                el.innerHTML = profiles.map(f => `
+                    <button class="party-friend-item" onclick="_selectPartyFriend('${escHtml(f.uid)}','${escHtml(f.nickname)}')">
+                        <div class="party-friend-avatar">${escHtml(f.nickname.charAt(0).toUpperCase())}</div>
+                        <div class="party-friend-name">${escHtml(f.nickname)}</div>
+                    </button>
+                `).join('');
+            } catch(e) {
+                el.innerHTML = '<div style="color:rgba(255,255,255,0.5);font-size:0.85em;">❌ Gagal memuat.</div>';
+            }
+        }
+
+        async function _selectPartyFriend(uid, name) {
+            _partyFriendUid  = uid;
+            _partyFriendName = name;
+            _partyId = `party_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+            // Sembunyikan picker
+            document.getElementById('party-friend-picker').style.display = 'none';
+            // Update slot 2 → status menunggu
+            const slot2 = document.getElementById('pslot-2');
+            slot2.className = 'party-slot waiting';
+            slot2.onclick = null;
+            document.getElementById('pslot-2-icon').textContent  = '⌛';
+            document.getElementById('pslot-2-name').textContent  = escHtml(name);
+            document.getElementById('pslot-2-sub').textContent   = 'Menunggu jawaban...';
+            document.getElementById('pslot-2-clear').style.display = 'flex';
+            // Kirim undangan via Firebase
+            if (currentUser) {
+                try {
+                    await db.ref(`users/${uid}/partyInvite`).set({
+                        fromUid: currentUser.uid,
+                        fromName: currentNickname || 'Player',
+                        partyId: _partyId,
+                        timestamp: Date.now()
+                    });
+                } catch(e) {
+                    showToast('❌ Gagal mengirim undangan.', 'error');
+                    clearPartyFriend(); return;
+                }
+            }
+            // Dengarkan balasan (accept / decline)
+            if (_partyStatusRef) _partyStatusRef.off();
+            _partyStatusRef = db.ref(`users/${currentUser.uid}/partyStatus/${_partyId}`);
+            _partyStatusRef.on('value', snap => {
+                if (!snap.exists()) return;
+                const s = snap.val();
+                if (s.accepted) {
+                    // Teman menerima
+                    const slot2El = document.getElementById('pslot-2');
+                    slot2El.className = 'party-slot joined';
+                    slot2El.onclick = null;
+                    document.getElementById('pslot-2-icon').textContent = '✅';
+                    document.getElementById('pslot-2-name').textContent = escHtml(s.acceptorName || name);
+                    document.getElementById('pslot-2-sub').textContent  = 'Siap bermain!';
+                    showToast(`✅ ${s.acceptorName || name} menerima undangan!`, 'success');
+                } else if (s.accepted === false) {
+                    // Teman menolak
+                    showToast(`❌ ${name} menolak undangan.`, 'error');
+                    _resetSlot2();
+                    _partyFriendUid = null; _partyFriendName = null; _partyId = null;
+                    if (_partyStatusRef) { _partyStatusRef.off(); _partyStatusRef = null; }
+                }
+            });
+        }
+
+        function clearPartyFriend() {
+            if (_partyFriendUid && currentUser) {
+                db.ref(`users/${_partyFriendUid}/partyInvite`).remove().catch(() => {});
+            }
+            if (_partyStatusRef) { _partyStatusRef.off(); _partyStatusRef = null; }
+            _partyFriendUid = null; _partyFriendName = null; _partyId = null;
+            _resetSlot2();
+            document.getElementById('party-friend-picker').style.display = 'none';
+        }
+
+        function _resetSlot2() {
+            const slot2 = document.getElementById('pslot-2');
+            if (!slot2) return;
+            slot2.className = 'party-slot empty';
+            slot2.onclick = togglePartyFriendPicker;
+            document.getElementById('pslot-2-icon').textContent  = '➕';
+            document.getElementById('pslot-2-name').textContent  = 'Ajak Teman';
+            document.getElementById('pslot-2-sub').textContent   = '(opsional)';
+            document.getElementById('pslot-2-clear').style.display = 'none';
+        }
+
+        function startMatchmakingFromParty() {
+            closePartyLobby();
+            startMatchmaking();
+        }
+
+        // ---- Sisi penerima undangan ----
+        function _startPartyInviteListener() {
+            if (!currentUser) return;
+            if (_partyInviteRef) _partyInviteRef.off();
+            _partyInviteRef = db.ref(`users/${currentUser.uid}/partyInvite`);
+            _partyInviteRef.on('value', snap => {
+                if (!snap.exists()) {
+                    document.getElementById('party-invite-popup').style.display = 'none';
+                    return;
+                }
+                const inv = snap.val();
+                if (!inv || !inv.fromUid || !inv.partyId) return;
+                // Abaikan undangan lebih dari 2 menit
+                if (inv.timestamp && Date.now() - inv.timestamp > 120000) {
+                    db.ref(`users/${currentUser.uid}/partyInvite`).remove();
+                    return;
+                }
+                _partyInviteData = inv;
+                document.getElementById('party-invite-msg').textContent =
+                    `${inv.fromName || 'Seorang teman'} mengajakmu main bareng!`;
+                document.getElementById('party-invite-popup').style.display = 'flex';
+            });
+        }
+
+        async function acceptPartyInvite() {
+            if (!_partyInviteData || !currentUser) return;
+            const inv = _partyInviteData;
+            document.getElementById('party-invite-popup').style.display = 'none';
+            _partyInviteData = null;
+            // Hapus undangan
+            await db.ref(`users/${currentUser.uid}/partyInvite`).remove().catch(() => {});
+            // Beritahu pengundang
+            await db.ref(`users/${inv.fromUid}/partyStatus/${inv.partyId}`).set({
+                accepted: true,
+                acceptorUid: currentUser.uid,
+                acceptorName: currentNickname || 'Player'
+            }).catch(() => {});
+            // Set partyId lalu langsung mulai matchmaking
+            _partyId = inv.partyId;
+            startMatchmaking();
+        }
+
+        async function declinePartyInvite() {
+            if (!_partyInviteData || !currentUser) return;
+            const inv = _partyInviteData;
+            document.getElementById('party-invite-popup').style.display = 'none';
+            _partyInviteData = null;
+            await db.ref(`users/${currentUser.uid}/partyInvite`).remove().catch(() => {});
+            await db.ref(`users/${inv.fromUid}/partyStatus/${inv.partyId}`).set({ accepted: false }).catch(() => {});
+        }
+
         // Nav bar scroll for menu buttons
         let _menuNavIndex = 0;
         const _menuNavVisible = 3;
@@ -6325,6 +6666,58 @@
             });
         }
     </script>
+
+    <!-- PARTY LOBBY POPUP -->
+    <div id="party-lobby-overlay" style="display:none;">
+        <div class="party-lobby-card">
+            <div class="party-lobby-title">🎮 Main Online</div>
+
+            <!-- Dua slot pemain -->
+            <div class="party-slots">
+                <!-- Slot 1: Player sendiri -->
+                <div class="party-slot filled" id="pslot-1">
+                    <div class="party-slot-icon" id="pslot-1-icon">👤</div>
+                    <div class="party-slot-name" id="pslot-1-name">Kamu</div>
+                </div>
+
+                <div class="party-vs-divider">+</div>
+
+                <!-- Slot 2: Teman (opsional) -->
+                <div class="party-slot empty" id="pslot-2" onclick="togglePartyFriendPicker()">
+                    <button class="party-slot-clear" id="pslot-2-clear"
+                        onclick="event.stopPropagation();clearPartyFriend()" style="display:none;">✖</button>
+                    <div class="party-slot-icon" id="pslot-2-icon">➕</div>
+                    <div class="party-slot-name" id="pslot-2-name">Ajak Teman</div>
+                    <div class="party-slot-sub" id="pslot-2-sub">(opsional)</div>
+                </div>
+            </div>
+
+            <!-- Friend Picker (tersembunyi sampai slot 2 diklik) -->
+            <div id="party-friend-picker" style="display:none;">
+                <div class="party-picker-title">Pilih Teman</div>
+                <div class="party-friend-list" id="party-friend-list">
+                    <div style="color:rgba(255,255,255,0.5);font-size:0.85em;padding:6px 0;">⏳ Memuat...</div>
+                </div>
+            </div>
+
+            <div class="party-lobby-actions">
+                <button class="party-btn-cancel" onclick="closePartyLobby()">✖ Batal</button>
+                <button class="party-btn-start" onclick="startMatchmakingFromParty()">▶ Mulai</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PARTY INVITE POPUP (muncul di layar teman yang diundang) -->
+    <div id="party-invite-popup" style="display:none;">
+        <div class="party-lobby-card">
+            <div class="party-lobby-title">🎮 Ajakan Main Bareng!</div>
+            <p class="party-invite-msg" id="party-invite-msg">Seseorang mengajakmu main bareng!</p>
+            <div class="party-lobby-actions">
+                <button class="party-btn-cancel" onclick="declinePartyInvite()">✖ Tolak</button>
+                <button class="party-btn-start" onclick="acceptPartyInvite()">✅ Terima</button>
+            </div>
+        </div>
+    </div>
 
     <!-- TOAST CONTAINER -->
     <div id="toast-container"></div>
