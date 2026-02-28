@@ -2680,7 +2680,7 @@
             </div>
 
             <div class="settings-section">
-                <span class="settings-section-label">🔊 Volume Sound Effect</span>
+                <span class="settings-section-label">🔊 Volume Efek Suara</span>
                 <div class="settings-slider-row">
                     <input type="range" class="settings-slider" id="vol-sfx"
                            min="0" max="100" value="50"
@@ -2692,7 +2692,7 @@
             <div class="settings-section">
                 <span class="settings-section-label">🗺️ Tampilan</span>
                 <div class="settings-toggle-row">
-                    <span class="settings-toggle-label">Tooltip nama provinsi saat hover kartu</span>
+                    <span class="settings-toggle-label">Tampilkan nama provinsi saat kursor di atas kartu</span>
                     <label class="settings-toggle">
                         <input type="checkbox" id="toggle-province-tooltip"
                                onchange="applyProvinceTooltipSetting(this.checked)">
@@ -2700,7 +2700,7 @@
                     </label>
                 </div>
                 <div class="settings-toggle-row" style="margin-top:12px;">
-                    <span class="settings-toggle-label">Nama provinsi di bawah kartu (deck)</span>
+                    <span class="settings-toggle-label">Nama provinsi di bawah kartu</span>
                     <label class="settings-toggle">
                         <input type="checkbox" id="toggle-deck-province-label"
                                onchange="applyDeckProvinceLabelSetting(this.checked)">
@@ -2711,7 +2711,7 @@
 
             <hr class="settings-divider">
 
-            <button class="btn-logout-settings" onclick="confirmLogout()">🚪 Keluar / Log Out</button>
+            <button class="btn-logout-settings" onclick="confirmLogout()">🚪 Keluar</button>
         </div>
     </div>
 
@@ -2816,7 +2816,7 @@
                     <span class="settings-slider-val" id="igs-vol-bgmusic2-val">30%</span>
                 </div>
 
-                <span class="igs-section-label" style="margin-top:12px;">🔊 Volume Sound Effect</span>
+                <span class="igs-section-label" style="margin-top:12px;">🔊 Volume Efek Suara</span>
                 <div class="settings-slider-row">
                     <input type="range" class="settings-slider" id="igs-vol-sfx"
                            min="0" max="100" value="50"
@@ -2828,7 +2828,7 @@
 
                 <span class="igs-section-label">🗺️ Tampilan</span>
                 <div class="settings-toggle-row" style="margin-top:8px;">
-                    <span class="settings-toggle-label">Tooltip nama provinsi</span>
+                    <span class="settings-toggle-label">Keterangan nama provinsi</span>
                     <label class="settings-toggle">
                         <input type="checkbox" id="igs-toggle-province-tooltip"
                                onchange="applyProvinceTooltipSetting(this.checked)">
@@ -6262,6 +6262,19 @@
         // Slider master SFX (0-100) → skala ke volume masing-masing dengan rasio base
         const SFX_MAX = Math.max(...Object.values(SFX_BASE)); // 0.6
 
+        // Muat volume tersimpan dari localStorage (jika ada)
+        (function() {
+            const v1  = localStorage.getItem('cgn_vol_bgmusic1');
+            const v2  = localStorage.getItem('cgn_vol_bgmusic2');
+            const sfx = localStorage.getItem('cgn_vol_sfx');
+            if (v1  !== null) soundEffects.bgMusic.volume  = parseInt(v1)  / 100;
+            if (v2  !== null) soundEffects.bgMusic2.volume = parseInt(v2)  / 100;
+            if (sfx !== null) {
+                const master = parseInt(sfx) / 100;
+                SFX_KEYS.forEach(k => { soundEffects[k].volume = master * (SFX_BASE[k] / SFX_MAX); });
+            }
+        })();
+
         // =============================================
         // PROVINCE TOOLTIP FEATURE
         // =============================================
@@ -6394,6 +6407,7 @@
         function applyVolumeBgMusic1(val) {
             const v = parseInt(val) / 100;
             soundEffects.bgMusic.volume = v;
+            localStorage.setItem('cgn_vol_bgmusic1', val);
             document.getElementById('vol-bgmusic1-val').textContent = val + '%';
             const s = document.getElementById('igs-vol-bgmusic1'); if (s) s.value = val;
             const sv = document.getElementById('igs-vol-bgmusic1-val'); if (sv) sv.textContent = val + '%';
@@ -6402,6 +6416,7 @@
         function applyVolumeBgMusic2(val) {
             const v = parseInt(val) / 100;
             soundEffects.bgMusic2.volume = v;
+            localStorage.setItem('cgn_vol_bgmusic2', val);
             document.getElementById('vol-bgmusic2-val').textContent = val + '%';
             const s = document.getElementById('igs-vol-bgmusic2'); if (s) s.value = val;
             const sv = document.getElementById('igs-vol-bgmusic2-val'); if (sv) sv.textContent = val + '%';
@@ -6412,6 +6427,7 @@
             SFX_KEYS.forEach(k => {
                 soundEffects[k].volume = master * (SFX_BASE[k] / SFX_MAX);
             });
+            localStorage.setItem('cgn_vol_sfx', val);
             document.getElementById('vol-sfx-val').textContent = val + '%';
             const s = document.getElementById('igs-vol-sfx'); if (s) s.value = val;
             const sv = document.getElementById('igs-vol-sfx-val'); if (sv) sv.textContent = val + '%';
