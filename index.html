@@ -4668,7 +4668,8 @@
         function _renderSpectatorView() {
             if (!gameState) return;
             const gs = gameState;
-            // Reuse round/phase elements if available
+
+            // Round, phase, province
             const rn = document.getElementById('round-number');
             const ph = document.getElementById('phase-name');
             const pl = document.getElementById('province-label');
@@ -4676,19 +4677,82 @@
             if (ph) ph.textContent = gs.phase || 1;
             if (pl) pl.textContent = gs.currentProvince ? `📍 ${gs.currentProvince}` : 'Menunggu kartu...';
 
-            // Show player cards in opponents area
-            const oppDiv = document.getElementById('opponents');
-            if (oppDiv && gs.players) {
-                oppDiv.innerHTML = '';
+            // Draw/discard pile counts
+            const dp2 = document.getElementById('draw-pile-count-2');
+            const dc2 = document.getElementById('discard-pile-count-2');
+            if (dp2) dp2.textContent = gs.drawPile ? gs.drawPile.length : 0;
+            if (dc2) dc2.textContent = gs.discardPile ? gs.discardPile.length : 0;
+
+            // Province info button
+            const infoBtn = document.getElementById('province-info-btn');
+            if (infoBtn) {
+                infoBtn.style.display = gs.currentProvince ? 'flex' : 'none';
+                if (!infoBtn._listenerAdded) { infoBtn.addEventListener('click', showProvinceInfo); infoBtn._listenerAdded = true; }
+            }
+
+            // Top cards (safe to call with null myPlayerId)
+            updateTopCardsUI();
+
+            // All players in opponents panel (myPlayerId=null → all players shown, no self filter)
+            updateBotsUI();
+
+            // Change "ANDA" header to "Penonton"
+            const hdr = document.getElementById('player-header-name');
+            if (hdr) hdr.textContent = '👁️ Penonton';
+
+            // Hide Draw Card button and draw level info
+            const btnDraw = document.getElementById('btn-draw');
+            const btnDrawInfo = document.getElementById('btn-draw-level-info');
+            if (btnDraw) btnDraw.style.display = 'none';
+            if (btnDrawInfo) btnDrawInfo.style.display = 'none';
+
+            // Hide Kartu & Power stat rows (spectator has none)
+            const pCardStat = document.getElementById('player-cards')?.closest('.player-stat');
+            const pPowerStat = document.getElementById('player-power')?.closest('.player-stat');
+            if (pCardStat) pCardStat.style.display = 'none';
+            if (pPowerStat) pPowerStat.style.display = 'none';
+
+            // Show all players' hands as mini (65%) scaled cards in player-deck area
+            const deckDiv = document.getElementById('player-deck');
+            if (deckDiv && gs.players) {
+                deckDiv.innerHTML = '';
                 gs.players.forEach(p => {
-                    const div = document.createElement('div');
-                    div.className = 'opponent-info';
+                    const section = document.createElement('div');
+                    section.style.cssText = 'margin-bottom:16px;';
                     const medals = { 1: '🥇', 2: '🥈', 3: '🥉', 4: '💀' };
-                    const status = p.winner ? `${medals[p.rank] || '🏅'} #${p.rank}` : `${p.hand?.length ?? '?'} kartu`;
-                    div.innerHTML = `<div class="opp-name">${p.name}${p.isBot ? ' 🤖' : ''}</div>
-                        <div class="opp-stat">${status}</div>
-                        <div class="opp-power">💪 ${p.totalPower ?? 0}</div>`;
-                    oppDiv.appendChild(div);
+                    const statusLabel = p.winner
+                        ? `${medals[p.rank] || '🏅'} Peringkat ${p.rank}`
+                        : `${p.hand?.length ?? 0} kartu | ⚡${p.totalPower ?? 0}`;
+                    const indicators = [];
+                    if (p.mustDraw) indicators.push('⚠️ Draw');
+                    if (p.mustForcePick) indicators.push('⚡ ForcePick');
+                    if (p.freed) indicators.push('✅ Bebas');
+                    if (p.autoMode) indicators.push('🔄 AFK');
+                    const nameDiv = document.createElement('div');
+                    nameDiv.style.cssText = `font-weight:bold; margin-bottom:7px; color:${p.winner ? '#aaa' : '#fff'};`;
+                    nameDiv.innerHTML = `${p.isBot ? '🤖' : '👤'} ${escHtml(getBotDisplayName(p))} — ${statusLabel}`
+                        + (indicators.length ? ` <span style="font-size:0.78em;opacity:0.7">[${indicators.join(' ')}]</span>` : '');
+                    section.appendChild(nameDiv);
+                    if (!p.winner && p.hand?.length > 0) {
+                        const cardsRow = document.createElement('div');
+                        cardsRow.style.cssText = 'display:flex; flex-wrap:wrap; gap:6px; align-items:flex-start;';
+                        p.hand.forEach(card => {
+                            // Wrapper sized to the scaled card (108*0.65≈70px, 152*0.65≈99px)
+                            const wrapper = document.createElement('div');
+                            wrapper.style.cssText = 'display:inline-block; width:70px; height:99px; flex-shrink:0; overflow:hidden;';
+                            const cardEl = createCardElement(card);
+                            cardEl.style.cssText = 'transform:scale(0.65); transform-origin:top left; cursor:default; pointer-events:none;';
+                            wrapper.appendChild(cardEl);
+                            cardsRow.appendChild(wrapper);
+                        });
+                        section.appendChild(cardsRow);
+                    } else if (p.winner) {
+                        const noCard = document.createElement('div');
+                        noCard.style.cssText = 'opacity:0.4; font-style:italic; font-size:0.82em;';
+                        noCard.textContent = 'Tidak ada kartu di tangan';
+                        section.appendChild(noCard);
+                    }
+                    deckDiv.appendChild(section);
                 });
             }
         }
