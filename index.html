@@ -1280,9 +1280,9 @@
         .dl-rate-stock { font-size: 0.78em; color: rgba(255,255,255,0.5); min-width: 90px; text-align: right; padding-left: 10px; }
         .btn-dl-info {
             background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
-            color: #fff; border-radius: 50%; width: 26px; height: 26px;
-            font-size: 0.85em; cursor: pointer; display: flex; align-items: center; justify-content: center;
-            transition: background .15s; flex-shrink: 0;
+            color: #fff; border-radius: 8px; padding: 4px 7px;
+            font-size: 1.1em; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: background .15s; flex-shrink: 0; line-height: 1;
         }
         .btn-dl-info:hover { background: rgba(255,255,255,0.28); }
         .profile-empty { color: rgba(255,255,255,0.5); text-align: center; padding: 40px 0; font-size: 1em; }
@@ -2017,7 +2017,7 @@
                                 <button class="btn-encyclopedia btn-teman-style" onclick="showTemanScreen()">👥 Teman</button>
                                 <div id="teman-notif-badge"></div>
                             </div>
-                            <button class="btn-encyclopedia btn-kostum-style" onclick="showKostumPicker()">🎭 Kostum</button>
+                            <button class="btn-encyclopedia btn-kostum-style" onclick="showKostumPicker()">⚔️ Kostum</button>
                             <button class="btn-encyclopedia btn-settings-style" onclick="showSettingsScreen()">⚙️ Pengaturan</button>
                         </div>
                     </div>
@@ -2616,7 +2616,7 @@
                             <div class="player-stat">📇 Kartu: <strong id="player-cards">0</strong></div>
                             <div class="player-stat">⚡ Power: <strong id="player-power">0</strong></div>
                             <div style="margin-left:15px; display:flex; align-items:center; gap:5px;">
-                                <button class="btn-draw" id="btn-draw" disabled>🎴 Draw Card</button>
+                                <button class="btn-draw" id="btn-draw" disabled>🎰 Draw Card</button>
                                 <button class="btn-dl-info" id="btn-draw-level-info" onclick="showDrawLevelInfo()" title="Info Draw Level">ℹ️</button>
                             </div>
                             <div style="margin-left:15px; padding:8px 15px; background:rgba(255,255,255,0.2); border-radius:8px;">
@@ -3593,6 +3593,17 @@
                     reconnectAttempts = 0; // reset karena berhasil
                     currentRoomId = roomId;
                     myPlayerId = playerId;
+                    // Restore custom room / spectator flags dari respons server
+                    _isCustomRoom = !!data.isCustomRoom;
+                    _isSpectator  = !!data.isSpectator;
+                    // Setup UI sesuai mode
+                    const _spBannerR = document.getElementById('spectator-banner');
+                    if (_spBannerR) _spBannerR.style.display = _isSpectator ? 'block' : 'none';
+                    const _btnSurrR = document.getElementById('btn-surrender');
+                    if (_btnSurrR) {
+                        if (_isSpectator) { _btnSurrR.style.display = 'none'; }
+                        else { _btnSurrR.style.display = ''; _btnSurrR.disabled = false; }
+                    }
                     // Baru tampilkan game container setelah reconnect berhasil dikonfirmasi server
                     document.getElementById('pre-loading-screen').style.display = 'none';
                     DOM.gameContainer.classList.add('active');
@@ -4521,8 +4532,9 @@
                     currentRoomId = data.roomId;
                     myPlayerId = data.playerId; // null for spectators
 
-                    // Only save session to localStorage for non-spectator, non-custom players
-                    if (!_isSpectator && !_isCustomRoom) {
+                    // Save session for all players (termasuk custom room) agar bisa rejoin setelah refresh/ganti device
+                    // Spectator tidak disimpan karena tidak punya playerId
+                    if (!_isSpectator) {
                         lsSet(LS.ROOM_ID, data.roomId);
                         lsSet(LS.PLAYER_ID, data.playerId);
                         lsSet(LS.GAME_ACTIVE, 'true');
@@ -4581,6 +4593,8 @@
 
                 case 'SAVE_STATS_CLIENT': {
                     // Server gagal menyimpan — client menjadi fallback.
+                    // Custom room & spectator tidak ada stats — abaikan
+                    if (_isCustomRoom || _isSpectator) break;
                     // Prioritas: rank dari pesan server > pendingClientSaveRank > gameState
                     // (data.rank selalu ada karena server sekarang menyertakannya)
                     let _rankToSave = data.rank || pendingClientSaveRank;
@@ -4690,6 +4704,13 @@
                 if (!infoBtn._listenerAdded) { infoBtn.addEventListener('click', showProvinceInfo); infoBtn._listenerAdded = true; }
             }
 
+            // Close province info modal (spectator path)
+            const closeBtn = document.getElementById('province-info-close');
+            if (closeBtn && !closeBtn._listenerAdded) {
+                closeBtn.addEventListener('click', closeProvinceInfo);
+                closeBtn._listenerAdded = true;
+            }
+
             // Top cards (safe to call with null myPlayerId)
             updateTopCardsUI();
 
@@ -4729,9 +4750,19 @@
                     if (p.freed) indicators.push('✅ Bebas');
                     if (p.autoMode) indicators.push('🔄 AFK');
                     const nameDiv = document.createElement('div');
-                    nameDiv.style.cssText = `font-weight:bold; margin-bottom:7px; color:${p.winner ? '#aaa' : '#fff'};`;
-                    nameDiv.innerHTML = `${p.isBot ? '🤖' : '👤'} ${escHtml(getBotDisplayName(p))} — ${statusLabel}`
+                    nameDiv.style.cssText = `font-weight:bold; margin-bottom:7px; color:${p.winner ? '#aaa' : '#fff'}; display:flex; align-items:center; gap:6px; flex-wrap:wrap;`;
+                    const nameSpan = document.createElement('span');
+                    nameSpan.innerHTML = `${p.isBot ? '🤖' : '👤'} ${escHtml(getBotDisplayName(p))} — ${statusLabel}`
                         + (indicators.length ? ` <span style="font-size:0.78em;opacity:0.7">[${indicators.join(' ')}]</span>` : '');
+                    nameDiv.appendChild(nameSpan);
+                    if (!p.winner) {
+                        const dlBtn = document.createElement('button');
+                        dlBtn.className = 'btn-dl-info';
+                        dlBtn.title = `Info Draw Level ${getBotDisplayName(p)}`;
+                        dlBtn.textContent = 'ℹ️';
+                        dlBtn.addEventListener('click', () => showDrawLevelInfo(p.id));
+                        nameDiv.appendChild(dlBtn);
+                    }
                     section.appendChild(nameDiv);
                     if (!p.winner && p.hand?.length > 0) {
                         const cardsRow = document.createElement('div');
@@ -6629,11 +6660,21 @@
         const DL_THRESHOLDS = [0, 0, 2, 5, 9, 14]; // index=level, value=min drawCount
         const DL_STARS = { 1:'⭐', 2:'⭐⭐', 3:'⭐⭐⭐', 4:'⭐⭐⭐⭐', 5:'⭐⭐⭐⭐⭐' };
 
-        function showDrawLevelInfo() {
-            if (!gameState || !myPlayerId) return;
-            const player = gameState.players.find(p => p.id === myPlayerId);
+        function showDrawLevelInfo(playerId) {
+            if (!gameState) return;
+            const targetId = playerId || myPlayerId;
+            if (!targetId) return;
+            const player = gameState.players.find(p => p.id === targetId);
             const level  = (player && player.drawLevel) || 1;
             const count  = (player && player.drawCount) || 0;
+
+            // Update judul: tampilkan nama pemain jika bukan diri sendiri
+            const titleEl = document.querySelector('#draw-level-overlay .dl-title');
+            if (titleEl) {
+                titleEl.textContent = playerId
+                    ? `🎰 Draw Level — ${getBotDisplayName(player)}`
+                    : '🎰 Draw Level';
+            }
 
             // Bintang & teks level
             document.getElementById('dl-star').textContent        = DL_STARS[level];
@@ -7395,6 +7436,12 @@
             _customRoomSlots.forEach(s => {
                 if (s?.pending && s.uid) db.ref(`users/${s.uid}/customRoomInvite`).remove().catch(() => {});
             });
+            // Ganti musik ke game music
+            try {
+                soundEffects.bgMusic.pause();
+                soundEffects.bgMusic2.currentTime = 0;
+                soundEffects.bgMusic2.play().catch(() => {});
+            } catch(e) {}
             ws.send(JSON.stringify({ type: 'START_CUSTOM_ROOM', userUid: currentUser ? currentUser.uid : '' }));
             document.getElementById('btn-custom-start').disabled = true;
             document.getElementById('btn-custom-start').textContent = '⏳ Memulai...';
