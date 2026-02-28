@@ -4608,6 +4608,12 @@
 
                 case 'ERROR':
                     showToast('❌ ' + data.message, 'error');
+                    // Reset tombol Mulai jika gagal memulai Custom Room
+                    { const _btnS = document.getElementById('btn-custom-start');
+                      if (_btnS && _btnS.textContent.includes('Memulai')) {
+                          _btnS.textContent = '▶ Mulai';
+                          _btnS.disabled = false;
+                      } }
                     // Jika error terjadi saat mencoba join custom room, reset seluruh state
                     if (_pendingCustomJoin) {
                         _pendingCustomJoin = false;
@@ -5245,10 +5251,10 @@
 
             document.getElementById('match-result-modal').classList.add('active');
 
-            // Tampilkan rank change jika rank pemain sudah ditentukan
+            // Tampilkan rank change jika rank pemain sudah ditentukan (skip untuk Custom Room)
             const rcContainer = document.getElementById('match-result-rank-change');
             rcContainer.innerHTML = '';
-            if (currentUser && myPlayerId) {
+            if (currentUser && myPlayerId && !_isCustomRoom) {
                 const me = gameState.players.find(p => p.id === myPlayerId);
                 if (me && me.winner && me.rank > 0) {
                     const _showRankCard2 = (r) => {
@@ -7207,7 +7213,9 @@
 
             // Update tombol Mulai — hanya hitung slot confirmed (bukan pending invite)
             const confirmedCount = (isSpect ? 0 : 1) + _customRoomSlots.filter(s => s && !s.pending).length;
-            document.getElementById('btn-custom-start').disabled = confirmedCount < 2;
+            const _btnStart = document.getElementById('btn-custom-start');
+            _btnStart.disabled = confirmedCount < 2;
+            _btnStart.textContent = '▶ Mulai';
         }
 
         async function openCustomFriendPicker(slotPos) {
