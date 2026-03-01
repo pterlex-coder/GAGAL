@@ -129,7 +129,7 @@
             background: transparent;
             padding: 0;
             border-radius: 0;
-            backdrop-filter: none;
+            -webkit-backdrop-filter: none; backdrop-filter: none;
             box-shadow: none;
             width: 100%;
             display: flex;
@@ -151,7 +151,7 @@
         }
         .matchmaking-waiting-box {
             background: rgba(30, 20, 80, 0.55);
-            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
             border: 2px solid rgba(255,255,255,0.18);
             border-radius: 28px;
             padding: 36px 56px;
@@ -308,7 +308,7 @@
         .opponents-panel {
             background: rgba(255,255,255,0.1);
             padding: 10px; border-radius: 10px;
-            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
             overflow-y: auto;
             max-height: calc(100vh - 10px);
             height: fit-content;
@@ -339,7 +339,7 @@
         /* PROVINCE PREVIEW (setelah lawan ditemukan) */
         #provinces-preview {
             background: rgba(10, 5, 40, 0.82);
-            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
             border: 2px solid rgba(255,255,255,0.18);
             border-radius: 20px;
             padding: 20px 22px;
@@ -401,7 +401,7 @@
         .top-card-area {
             background: rgba(255,255,255,0.1);
             padding: 15px; border-radius: 10px;
-            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
             flex-shrink: 0; min-height: 225px; height: 225px;
             position: relative;
         }
@@ -420,7 +420,7 @@
         .player-area {
             background: rgba(255,255,255,0.15);
             padding: 15px; border-radius: 10px;
-            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
             display: flex; flex-direction: column;
             width: 100%; box-sizing: border-box;
         }
@@ -467,7 +467,7 @@
             position: fixed; bottom: 20px; left: 20px;
             width: 46px; height: 46px; border-radius: 50%;
             background: rgba(20, 15, 50, 0.72);
-            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
             border: 1.5px solid rgba(255,255,255,0.22);
             color: #fff; font-size: 1.25em;
             cursor: pointer; z-index: 9000;
@@ -625,7 +625,7 @@
             background: rgba(255,255,255,0.3); border: 2px solid rgba(255,255,255,0.5);
             border-radius: 8px; display: none; align-items: center; justify-content: center;
             cursor: pointer; font-size: 1.4em; transition: all 0.3s;
-            backdrop-filter: blur(5px); z-index: 5; padding: 0; line-height: 1;
+            -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px); z-index: 5; padding: 0; line-height: 1;
         }
         .province-info-btn:hover { background: rgba(255,255,255,0.5); transform: scale(1.1); }
 
@@ -635,7 +635,7 @@
             background: rgba(102,126,234,0.8); border: 2px solid rgba(255,255,255,0.6);
             border-radius: 8px; display: none; align-items: center; justify-content: center;
             cursor: pointer; font-size: 1.4em; transition: all 0.3s;
-            backdrop-filter: blur(5px); z-index: 5; padding: 0; line-height: 1;
+            -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px); z-index: 5; padding: 0; line-height: 1;
         }
         .sync-refresh-btn:hover { background: rgba(102,126,234,1); transform: scale(1.1) rotate(180deg); }
         .sync-refresh-btn.urgent { background: rgba(244,67,54,0.9); border-color: #fff; animation: pulseUrgent 1s ease-in-out infinite; }
@@ -831,7 +831,7 @@
             background: rgba(255,255,255,0.15);
             padding: 40px;
             border-radius: 20px;
-            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
             box-shadow: 0 10px 40px rgba(0,0,0,0.3);
             width: 100%;
             max-width: 400px;
@@ -888,7 +888,7 @@
             background: rgba(255,255,255,0.15);
             padding: 40px;
             border-radius: 20px;
-            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
             box-shadow: 0 10px 40px rgba(0,0,0,0.3);
             width: 100%; max-width: 400px;
         }
@@ -908,7 +908,7 @@
             position: fixed;
             top: 12px; right: 15px;
             background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
             border: 2px solid rgba(255,255,255,0.3);
             border-radius: 12px;
             padding: 8px 14px;
@@ -1061,7 +1061,7 @@
             z-index: 15000; overflow-y: auto;
         }
         .enc-header {
-            background: rgba(255,255,255,0.15); backdrop-filter: blur(10px);
+            background: rgba(255,255,255,0.15); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(255,255,255,0.25);
             padding: 16px 20px; display: flex; align-items: center;
             justify-content: space-between; position: sticky; top: 0; z-index: 100;
@@ -1136,7 +1136,7 @@
             background: rgba(255,255,255,0.15); border-radius: 10px;
             border-left: 4px solid rgba(255,255,255,0.6);
             display: flex; align-items: center; gap: 10px;
-            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
         }
         .enc-province-img {
             height: 48px;
@@ -1177,7 +1177,7 @@
             background: rgba(255,255,255,0.15); border-radius: 16px;
             padding: 20px 22px; margin-bottom: 14px;
             border-left: 5px solid rgba(255,255,255,0.5);
-            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
         }
         .enc-rule-icon { font-size: 2em; margin-bottom: 8px; display: block; }
@@ -1291,7 +1291,7 @@
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         }
         .rank-info-header {
-            background: rgba(255,255,255,0.12); backdrop-filter: blur(10px);
+            background: rgba(255,255,255,0.12); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(255,255,255,0.2);
             border-radius: 18px 18px 0 0; padding: 16px 20px;
             display: flex; align-items: center; justify-content: space-between;
@@ -1351,7 +1351,7 @@
         }
         @keyframes popIn { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .dl-header {
-            background: rgba(255,255,255,0.1); backdrop-filter: blur(8px);
+            background: rgba(255,255,255,0.1); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
             border-bottom: 1px solid rgba(255,255,255,0.15);
             border-radius: 18px 18px 0 0; padding: 14px 18px;
             display: flex; align-items: center; justify-content: space-between;
@@ -1749,7 +1749,7 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.65); z-index: 20000;
             justify-content: center; align-items: center;
-            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
         }
         .party-lobby-card {
             background: linear-gradient(135deg, rgba(102,126,234,0.97) 0%, rgba(118,75,162,0.97) 100%);
@@ -1864,7 +1864,7 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.65); z-index: 21000;
             justify-content: center; align-items: center;
-            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
         }
         .party-invite-msg {
             color: rgba(255,255,255,0.85); text-align: center;
@@ -1904,7 +1904,7 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.72); z-index: 22000;
             display: none; justify-content: center; align-items: center;
-            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
         }
         .kostum-picker-card {
             background: linear-gradient(160deg, #1a1040 0%, #0d1b2a 100%);
@@ -1949,7 +1949,7 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.72); z-index: 22000;
             display: none; justify-content: center; align-items: center;
-            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
         }
         .custom-room-card {
             background: linear-gradient(160deg, #1a1040 0%, #0d1b2a 100%);
@@ -2051,7 +2051,7 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.65); z-index: 23000;
             display: none; justify-content: center; align-items: center;
-            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
         }
         /* Spectator banner in game */
         #spectator-banner {
@@ -3601,6 +3601,17 @@
             });
         }
 
+        /** Set status busy/idle di presence node (inQueue, inLobby, inGame, atau hapus jika online). */
+        function _setPresenceStatus(status) {
+            if (!currentUser || !db) return;
+            const ref = db.ref(`presence/${currentUser.uid}/status`);
+            if (!status || status === 'online') {
+                ref.remove().catch(() => {});
+            } else {
+                ref.set(status).catch(() => {});
+            }
+        }
+
         /** Hapus presence dan lepas listener saat logout/tutup. */
         function clearPresence() {
             if (_connectedRef) {
@@ -3943,13 +3954,13 @@
             ws = new WebSocket(SERVER_URL);
 
             ws.onopen = () => {
-                startClientKeepAlive(); // ← TAMBAHKAN INI
+                startClientKeepAlive();
                 ws.send(JSON.stringify({
                     type: 'REJOIN_ROOM',
                     roomId: roomId,
                     playerId: playerId,
                     playerName: currentNickname || lsGet(LS.NICKNAME) || 'Player',
-                    userUid: currentUser ? currentUser.uid : (lsGet(LS.USER_UID) || '') // ← TAMBAHKAN INI
+                    userUid: currentUser ? currentUser.uid : (lsGet(LS.USER_UID) || '')
                 }));
             };
 
@@ -4834,6 +4845,7 @@
         // MATCHMAKING
         // =============================================
         function startMatchmaking() {
+            _setPresenceStatus('inQueue');
             soundEffects.bgMusic.pause();
             try {
                 soundEffects.bgMusic2.currentTime = 0;
@@ -4886,6 +4898,7 @@
         }
 
         function cancelMatchmaking() {
+            _setPresenceStatus('online');
             stopMatchmakingCountdown();
             _partyId = null; // reset party state
             _partyQueueSize = null;
@@ -4960,6 +4973,7 @@
                     break;
 
                 case 'GAME_STARTED':
+                    _setPresenceStatus('inGame');
                     // Handle custom room / spectator flags
                     _isCustomRoom = !!data.isCustomRoom;
                     _isSpectator  = !!data.isSpectator;
@@ -5984,6 +5998,7 @@
             lsClear();
             Object.keys(botNameMap).forEach(k => delete botNameMap[k]);
 
+            _setPresenceStatus('online');
             // Sembunyikan layar game & matchmaking
             DOM.gameContainer.classList.remove('active');
             DOM.matchmakingScreen.classList.remove('active');
@@ -7501,11 +7516,13 @@
             document.getElementById('pslot-1-icon').innerHTML = _getAvatarWithFrameHtml(54);
             // Tampilkan overlay
             document.getElementById('party-lobby-overlay').style.display = 'flex';
+            _setPresenceStatus('inLobby');
         }
 
         function closePartyLobby(keepPartyId = false) {
             document.getElementById('party-lobby-overlay').style.display = 'none';
             document.getElementById('party-friend-picker').style.display = 'none';
+            _setPresenceStatus('online');
             // Batalkan invite yang sudah dikirim (jika ada)
             if (_partyFriendUid && currentUser) {
                 db.ref(`users/${_partyFriendUid}/partyInvite`).remove().catch(() => {});
@@ -7558,8 +7575,8 @@
                     db.ref('presence').get()
                 ]);
                 const presence = presSnap.exists() ? presSnap.val() : {};
-                // Hanya tampilkan teman yang sedang online
-                const onlineProfiles = profiles.filter(f => presence[f.uid]?.online === true);
+                // Hanya tampilkan teman yang sedang online dan tidak sedang sibuk (tidak di antrian/lobi/game)
+                const onlineProfiles = profiles.filter(f => presence[f.uid]?.online === true && !presence[f.uid]?.status);
                 if (!onlineProfiles.length) {
                     el.innerHTML = '<div style="color:rgba(255,255,255,0.5);font-size:0.85em;">Tidak ada teman yang online.</div>';
                     return;
@@ -7630,10 +7647,25 @@
                     const slotEl2 = document.getElementById(`pslot-${slotNum}`);
                     slotEl2.className = 'party-slot joined';
                     slotEl2.onclick = null;
-                    document.getElementById(`pslot-${slotNum}-icon`).textContent = '✅';
-                    document.getElementById(`pslot-${slotNum}-name`).textContent = escHtml(s.acceptorName || name);
+                    const acceptedName = s.acceptorName || name;
+                    document.getElementById(`pslot-${slotNum}-name`).textContent = escHtml(acceptedName);
                     document.getElementById(`pslot-${slotNum}-sub`).textContent  = 'Siap bermain!';
-                    showToast(`✅ ${s.acceptorName || name} menerima undangan!`, 'success');
+                    // Tampilkan foto profil + bingkai rank teman yang menerima
+                    Promise.all([
+                        db.ref(`userAvatars/${uid}`).get(),
+                        db.ref(`users/${uid}/rankData`).get()
+                    ]).then(([avSnap, rkSnap]) => {
+                        const avNum = avSnap.exists() ? String(avSnap.val()) : '7';
+                        const rkName = rkSnap.exists() ? (rkSnap.val().rankName || 'Bronze III') : 'Bronze III';
+                        const fStyle = _getRankFrameStyle(rkName);
+                        const init = acceptedName.charAt(0).toUpperCase();
+                        const iconEl = document.getElementById(`pslot-${slotNum}-icon`);
+                        if (iconEl) iconEl.innerHTML = `<div style="width:54px;height:54px;border-radius:10px;overflow:hidden;${fStyle}display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f093fb,#f5576c);font-size:1.4em;font-weight:bold;color:white;"><img src="gambar/avatar/avatar${avNum}.png" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.textContent='${init}'"></div>`;
+                    }).catch(() => {
+                        const iconEl = document.getElementById(`pslot-${slotNum}-icon`);
+                        if (iconEl) iconEl.textContent = '✅';
+                    });
+                    showToast(`✅ ${acceptedName} menerima undangan!`, 'success');
                     db.ref(statusPath).remove().catch(() => {});
                     statusRef.off();
                     if (slotNum === 2) _partyStatusRef = null; else _partyStatus2Ref = null;
@@ -7765,6 +7797,7 @@
             }).catch(() => {});
             // Simpan partyId dan tunggu sinyal "mulai" dari host via Firebase
             _partyId = inv.partyId;
+            _setPresenceStatus('inLobby');
             showToast('✅ Undangan diterima! Menunggu host memulai...', 'success');
             // Update popup jadi "menunggu"
             document.getElementById('party-invite-msg').textContent = 'Menunggu host memulai matchmaking...';
@@ -7814,6 +7847,7 @@
             }
             _partyId = null;
             _partyQueueSize = null;
+            _setPresenceStatus('online');
         }
 
         // =============================================
@@ -7845,6 +7879,7 @@
             _customRoomId = null;
             _customPickerSlot = null;
             _isCustomRoomCreator = true; // user ini yang membuat room
+            _setPresenceStatus('inLobby');
 
             // Pastikan WS tersambung sebelum kirim
             if (!ws || ws.readyState !== WebSocket.OPEN) {
@@ -8007,7 +8042,7 @@
                 invitedUids.push(currentUser.uid);
 
                 const onlineFriends = Object.entries(friends)
-                    .filter(([uid]) => presence[uid]?.online && !invitedUids.includes(uid));
+                    .filter(([uid]) => presence[uid]?.online && !invitedUids.includes(uid) && !presence[uid]?.status);
 
                 if (friendsSection) friendsSection.remove();
                 if (onlineFriends.length === 0) {
@@ -8090,6 +8125,7 @@
         }
 
         function leaveCustomRoom() {
+            _setPresenceStatus('online');
             if (ws && ws.readyState === WebSocket.OPEN && _customRoomId) {
                 ws.send(JSON.stringify({ type: 'LEAVE_CUSTOM_ROOM', userUid: currentUser ? currentUser.uid : '' }));
             }
@@ -8210,6 +8246,7 @@
                 _customRoomSlots = [];
                 _pendingCustomJoin = true;
                 _isCustomRoomCreator = false; // bergabung sebagai tamu, bukan pencipta room
+                _setPresenceStatus('inLobby');
                 showToast('⏳ Bergabung ke custom room...', 'info');
                 const myName = currentNickname || lsGet(LS.NICKNAME) || 'Player';
                 ws.send(JSON.stringify({
