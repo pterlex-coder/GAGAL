@@ -4890,7 +4890,7 @@
                             if (_deckDiv) _deckDiv.innerHTML = '';
                         }
                         updateGameUI(data.state);
-                        addLog(_isSpectator ? '👁️ Kamu menonton pertandingan ini.' : '🎮 Game dimulai! Selamat bermain!');
+                        addLog(_isSpectator ? '📺 Kamu menonton pertandingan ini.' : '🎮 Game dimulai! Selamat bermain!');
                     }, 500);
                     break;
 
@@ -5050,7 +5050,7 @@
 
             // Change "ANDA" header to "Penonton"
             const hdr = document.getElementById('player-header-name');
-            if (hdr) hdr.textContent = '👁️ Penonton';
+            if (hdr) hdr.textContent = '📺 Penonton';
 
             // Hide Draw Card button and draw level info
             const btnDraw = document.getElementById('btn-draw');
@@ -7740,7 +7740,7 @@
             const isSpect = _customRoomRole === 'penonton';
             const canManageBots = _isCustomRoomCreator;
 
-            document.getElementById('custom-room-title').textContent = isSpect ? '👁️ Custom Room – Penonton' : '🎮 Custom Room – Pemain';
+            document.getElementById('custom-room-title').textContent = isSpect ? '📺 Custom Room – Penonton' : '🎮 Custom Room – Pemain';
             document.getElementById('custom-room-subtitle').textContent = isSpect
                 ? 'Kamu hanya menonton. Undang 4 pemain.'
                 : 'Slot 1 = kamu. Undang teman atau isi slot dengan bot.';
@@ -8314,7 +8314,7 @@
                     <span class="role-desc">Ikut bermain dalam pertandingan</span>
                 </button>
                 <button class="kostum-role-btn penonton" onclick="playSound('button');selectKostumRole('penonton')">
-                    <span class="role-icon">👁️</span>
+                    <span class="role-icon">📺</span>
                     <span class="role-label">Penonton</span>
                     <span class="role-desc">Hanya menonton, undang 4 pemain</span>
                 </button>
