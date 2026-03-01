@@ -7500,8 +7500,13 @@
         let _partyStatus2Ref  = null;  // Listener accept/decline slot 3
         let _partyInviteRef   = null;
         let _partySignalRef   = null;  // Listener partyStart dari host (sisi penerima)
-        let _isPartyGuest     = false; // true saat melihat party lobby sebagai tamu (bukan host)
-        let _partyHostUid     = null;  // UID host party (dipakai tamu)
+        let _isPartyGuest         = false; // true saat melihat party lobby sebagai tamu (bukan host)
+        let _partyHostUid         = null;  // UID host party (dipakai tamu)
+        let _guestPartyStatusRef  = null;  // Listener partyStatus host (update slot 3 real-time)
+        let _partyRosterRef     = null;  // Host: listener roster untuk deteksi tamu keluar sukarela
+        let _partyKickRef       = null;  // Guest: listener notifikasi dikick/dibubarkan
+        let _partyGuestRosterRef= null;  // Guest: listener roster untuk update slot 3 saat tamu lain keluar
+        let _guestSlot3Uid      = null;  // Guest: UID pemain di slot 3
         let _openPickerSlot   = null;  // Slot mana yang sedang memilih teman (2 atau 3)
 
         function showPartyLobby() {
@@ -7525,6 +7530,10 @@
             // Jika dalam mode tamu, gunakan alur batal khusus tamu
             if (_isPartyGuest) {
                 if (_partySignalRef) { _partySignalRef.off(); _partySignalRef = null; }
+                // Hapus diri dari roster agar host tahu tamu keluar sukarela
+                if (_partyId && currentUser) {
+                    db.ref(`partyRoster/${_partyId}/${currentUser.uid}`).remove().catch(() => {});
+                }
                 _closeGuestPartyLobby();
                 _partyId = null;
                 _partyQueueSize = null;
@@ -7543,6 +7552,14 @@
             }
             if (_partyStatusRef) { _partyStatusRef.off(); _partyStatusRef = null; }
             if (_partyStatus2Ref) { _partyStatus2Ref.off(); _partyStatus2Ref = null; }
+            // Stop roster listener
+            if (_partyRosterRef) { _partyRosterRef.off(); _partyRosterRef = null; }
+            // Jika host benar-benar menutup lobby (bukan mulai matchmaking), beritahu semua tamu
+            if (!keepPartyId && _partyId && currentUser) {
+                if (_partyFriendUid)  db.ref(`users/${_partyFriendUid}/partyKick`).set({ disbanded: true }).catch(() => {});
+                if (_partyFriend2Uid) db.ref(`users/${_partyFriend2Uid}/partyKick`).set({ disbanded: true }).catch(() => {});
+                db.ref(`partyRoster/${_partyId}`).remove().catch(() => {});
+            }
             _partyFriendUid = null; _partyFriendName = null;
             _partyFriend2Uid = null; _partyFriend2Name = null;
             _openPickerSlot = null;
@@ -7680,6 +7697,24 @@
                     db.ref(statusPath).remove().catch(() => {});
                     statusRef.off();
                     if (slotNum === 2) _partyStatusRef = null; else _partyStatus2Ref = null;
+                    // Tulis roster agar tamu lain dapat pantau kehadiran slot ini
+                    if (_partyId) db.ref(`partyRoster/${_partyId}/${uid}`).set(true).catch(() => {});
+                    // Pasang listener roster (sekali saja) untuk deteksi tamu keluar sukarela
+                    if (!_partyRosterRef && _partyId) {
+                        _partyRosterRef = db.ref(`partyRoster/${_partyId}`);
+                        _partyRosterRef.on('child_removed', rSnap => {
+                            const leftUid = rSnap.key;
+                            if (leftUid === _partyFriendUid) {
+                                _partyFriendUid = null; _partyFriendName = null;
+                                _resetPartySlot(2);
+                                showToast('ℹ️ Tamu meninggalkan party.', 'info');
+                            } else if (leftUid === _partyFriend2Uid) {
+                                _partyFriend2Uid = null; _partyFriend2Name = null;
+                                _resetPartySlot(3);
+                                showToast('ℹ️ Tamu meninggalkan party.', 'info');
+                            }
+                        });
+                    }
                 } else if (s.accepted === false) {
                     showToast(`❌ ${name} menolak undangan.`, 'error');
                     db.ref(statusPath).remove().catch(() => {});
@@ -7693,7 +7728,14 @@
 
         function clearPartyFriend(slotNum) {
             const uid = slotNum === 2 ? _partyFriendUid : _partyFriend2Uid;
-            if (uid && currentUser) db.ref(`users/${uid}/partyInvite`).remove().catch(() => {});
+            if (uid && currentUser) {
+                db.ref(`users/${uid}/partyInvite`).remove().catch(() => {});
+                // Notifikasi kick ke tamu + hapus dari roster bersama
+                if (_partyId) {
+                    db.ref(`users/${uid}/partyKick`).set({ kicked: true, partyId: _partyId }).catch(() => {});
+                    db.ref(`partyRoster/${_partyId}/${uid}`).remove().catch(() => {});
+                }
+            }
             if (slotNum === 2) {
                 if (_partyStatusRef) { _partyStatusRef.off(); _partyStatusRef = null; }
                 _partyFriendUid = null; _partyFriendName = null;
@@ -7873,11 +7915,76 @@
             // Tampilkan overlay
             document.getElementById('party-friend-picker').style.display = 'none';
             document.getElementById('party-lobby-overlay').style.display = 'flex';
+            // Listener real-time: update slot 3 saat tamu ke-2 menerima undangan host
+            if (_guestPartyStatusRef) { _guestPartyStatusRef.off(); _guestPartyStatusRef = null; }
+            if (_partyId && currentUser) {
+                _guestPartyStatusRef = db.ref(`users/${hostUid}/partyStatus/${_partyId}`);
+                _guestPartyStatusRef.on('child_added', snap => {
+                    const uid = snap.key;
+                    const val = snap.val();
+                    if (!val || !val.accepted || uid === currentUser.uid) return;
+                    // Tamu lain menerima → update slot 3 dan catat UID-nya
+                    _guestSlot3Uid = uid;
+                    const theirName = val.acceptorName || 'Tamu';
+                    const s3 = document.getElementById('pslot-3');
+                    if (!s3) return;
+                    s3.className = 'party-slot joined';
+                    s3.onclick = null;
+                    document.getElementById('pslot-3-name').textContent = escHtml(theirName);
+                    document.getElementById('pslot-3-sub').textContent  = 'Siap bermain!';
+                    document.getElementById('pslot-3-clear').style.display = 'none';
+                    document.getElementById('pslot-3-icon').textContent = '⌛';
+                    Promise.all([
+                        db.ref(`userAvatars/${uid}`).get(),
+                        db.ref(`users/${uid}/rankData`).get()
+                    ]).then(([avSnap, rkSnap]) => {
+                        const avNum  = avSnap.exists() ? String(avSnap.val()) : '7';
+                        const rkName = rkSnap.exists() ? (rkSnap.val().rankName || 'Bronze III') : 'Bronze III';
+                        const fStyle = _getRankFrameStyle(rkName);
+                        const init   = theirName.charAt(0).toUpperCase();
+                        const el = document.getElementById('pslot-3-icon');
+                        if (el) el.innerHTML = `<div style="width:54px;height:54px;border-radius:10px;overflow:hidden;${fStyle}display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f093fb,#f5576c);font-size:1.4em;font-weight:bold;color:white;"><img src="gambar/avatar/avatar${avNum}.png" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.textContent='${init}'"></div>`;
+                    }).catch(() => {});
+                });
+            }
+            // Listener kick/dibubarkan oleh host
+            if (_partyKickRef) { _partyKickRef.off(); _partyKickRef = null; }
+            if (currentUser) {
+                _partyKickRef = db.ref(`users/${currentUser.uid}/partyKick`);
+                _partyKickRef.on('value', snap => {
+                    if (!snap.exists()) return;
+                    const val = snap.val();
+                    db.ref(`users/${currentUser.uid}/partyKick`).remove().catch(() => {});
+                    if (_partyKickRef) { _partyKickRef.off(); _partyKickRef = null; }
+                    if (_partySignalRef) { _partySignalRef.off(); _partySignalRef = null; }
+                    _closeGuestPartyLobby();
+                    _partyId = null; _partyQueueSize = null;
+                    _setPresenceStatus('online');
+                    if (val && val.disbanded) showToast('ℹ️ Party telah dibubarkan oleh host.', 'info');
+                    else showToast('ℹ️ Kamu telah dikeluarkan dari party.', 'info');
+                });
+            }
+            // Listener roster: pantau jika tamu di slot 3 meninggalkan party
+            if (_partyGuestRosterRef) { _partyGuestRosterRef.off(); _partyGuestRosterRef = null; }
+            _guestSlot3Uid = null;
+            if (_partyId && currentUser) {
+                _partyGuestRosterRef = db.ref(`partyRoster/${_partyId}`);
+                _partyGuestRosterRef.on('child_removed', rSnap => {
+                    if (rSnap.key === _guestSlot3Uid) {
+                        _guestSlot3Uid = null;
+                        _resetSlot3();
+                    }
+                });
+            }
         }
 
         function _closeGuestPartyLobby() {
             _isPartyGuest = false;
             _partyHostUid = null;
+            if (_guestPartyStatusRef) { _guestPartyStatusRef.off(); _guestPartyStatusRef = null; }
+            if (_partyKickRef) { _partyKickRef.off(); _partyKickRef = null; }
+            if (_partyGuestRosterRef) { _partyGuestRosterRef.off(); _partyGuestRosterRef = null; }
+            _guestSlot3Uid = null;
             document.getElementById('party-lobby-overlay').style.display = 'none';
             _resetSlot2();
             _resetSlot3();
@@ -8031,10 +8138,25 @@
                 } else if (entry) {
                     // Slot teman (terisi atau pending)
                     slot.classList.add('filled');
+                    const cIconId = `cslot-icon-${slotPos}`;
+                    const cInit   = entry.name.charAt(0).toUpperCase();
                     slot.innerHTML = `
-                        <div class="custom-slot-num">${slotPos}</div>
+                        <div id="${cIconId}" style="width:36px;height:36px;border-radius:6px;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f093fb,#f5576c);font-size:1em;font-weight:bold;color:white;flex-shrink:0;">${cInit}</div>
                         <div class="custom-slot-name">${escHtml(entry.name)}</div>
                         ${canManageBots ? `<button class="custom-slot-clear" onclick="playSound('button');clearCustomSlot(${slotIdx})">✖</button>` : ''}`;
+                    // Fetch avatar + rank frame async (hanya slot yang sudah dikonfirmasi)
+                    if (entry.uid && !entry.pending) {
+                        (uid => Promise.all([
+                            db.ref(`userAvatars/${uid}`).get(),
+                            db.ref(`users/${uid}/rankData`).get()
+                        ]).then(([avSnap, rkSnap]) => {
+                            const avNum  = avSnap.exists() ? String(avSnap.val()) : '7';
+                            const rkName = rkSnap.exists() ? (rkSnap.val().rankName || 'Bronze III') : 'Bronze III';
+                            const fStyle = _getRankFrameStyle(rkName);
+                            const el = document.getElementById(cIconId);
+                            if (el) el.outerHTML = `<div style="width:36px;height:36px;border-radius:6px;overflow:hidden;${fStyle}display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f093fb,#f5576c);font-size:1em;font-weight:bold;color:white;flex-shrink:0;"><img src="gambar/avatar/avatar${avNum}.png" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.textContent='${cInit}'"></div>`;
+                        }).catch(() => {}))(entry.uid);
+                    }
                 } else {
                     // Slot kosong
                     if (totalOccupied >= 4) continue; // penuh, jangan tampilkan
@@ -8213,24 +8335,40 @@
             // data.slots = [{slot, name, uid, isBot?, level?}]
             if (!data.slots) return;
             const isSpect = _customRoomRole === 'penonton';
-            // Ukuran array: penonton 4 slot (index 0-3), pemain 3 slot (index 0-2 untuk slot 2-4)
-            const size = isSpect ? 4 : 3;
-            const newSlots = new Array(size).fill(null);
-            data.slots.forEach(s => {
-                // Konversi slot position ke array index
-                const idx = isSpect ? (s.slot - 1) : (s.slot - 2);
-                if (idx < 0 || idx >= size) return; // slot 1 untuk pemain diabaikan (itu diri sendiri)
-                newSlots[idx] = s.isBot
-                    ? { name: s.name, uid: null, isBot: true, level: s.level }
-                    : { name: s.name, uid: s.uid };
-            });
-            // Pertahankan pending invite di slot yang belum dikonfirmasi server
-            for (let i = 0; i < size; i++) {
-                if (!newSlots[i] && _customRoomSlots[i]?.pending) {
-                    newSlots[i] = _customRoomSlots[i];
+            const myUid   = currentUser ? currentUser.uid : null;
+
+            if (isSpect) {
+                // Penonton: semua 4 slot berdasarkan posisi server
+                const newSlots = new Array(4).fill(null);
+                data.slots.forEach(s => {
+                    const idx = s.slot - 1;
+                    if (idx < 0 || idx >= 4) return;
+                    newSlots[idx] = s.isBot
+                        ? { name: s.name, uid: null, isBot: true, level: s.level }
+                        : { name: s.name, uid: s.uid };
+                });
+                for (let i = 0; i < 4; i++) {
+                    if (!newSlots[i] && _customRoomSlots[i]?.pending) newSlots[i] = _customRoomSlots[i];
                 }
+                _customRoomSlots = newSlots;
+            } else {
+                // Pemain: slot 1 UI selalu "Kamu" — exclude UID sendiri, urutkan sisanya
+                const others = data.slots
+                    .filter(s => s.isBot || s.uid !== myUid)
+                    .sort((a, b) => a.slot - b.slot);
+                const newSlots = new Array(3).fill(null);
+                others.forEach((s, i) => {
+                    if (i >= 3) return;
+                    newSlots[i] = s.isBot
+                        ? { name: s.name, uid: null, isBot: true, level: s.level }
+                        : { name: s.name, uid: s.uid };
+                });
+                // Pertahankan pending invite di slot yang belum dikonfirmasi server
+                for (let i = 0; i < 3; i++) {
+                    if (!newSlots[i] && _customRoomSlots[i]?.pending) newSlots[i] = _customRoomSlots[i];
+                }
+                _customRoomSlots = newSlots;
             }
-            _customRoomSlots = newSlots;
             _renderCustomRoomLobby();
         }
 
