@@ -525,7 +525,7 @@
         .card.mythic      { border: 2px solid #ff6d00; background: linear-gradient(135deg, #fff3e0 0%, #ffcc80 100%); }
         .card.legendary   { border: 2px solid #ffd700; background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%); }
         .card.epic        { border: 2px solid #9c27b0; background: linear-gradient(135deg, #e1bee7 0%, #ce93d8 100%); }
-        .card.rareplus    { border: 2px solid #0d2b6e; background: linear-gradient(135deg, #1a4faf 0%, #0d2b6e 100%); color: #fff; }
+        .card.rareplus    { border: 2px solid #4338ca; background: linear-gradient(135deg, #c7d2fe 0%, #818cf8 100%); }
         .card.rarestar    { border: 2px solid #2196f3; background: linear-gradient(135deg, #bbdefb 0%, #64b5f6 100%); }
         .card.rare        { border: 2px solid #00acc1; background: linear-gradient(135deg, #e0f7fa 0%, #80deea 100%); }
         .card.uncommon    { border: 2px solid #2e7d32; background: linear-gradient(135deg, #c8e6c9 0%, #81c784 100%); }
@@ -701,7 +701,7 @@
         .province-info-card.mythic      { border: 2px solid #ff6d00; background: linear-gradient(135deg, #fff3e0 0%, #ffcc80 100%); }
         .province-info-card.legendary   { border: 2px solid #ffd700; background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%); }
         .province-info-card.epic        { border: 2px solid #9c27b0; background: linear-gradient(135deg, #e1bee7 0%, #ce93d8 100%); }
-        .province-info-card.rareplus    { border: 2px solid #0d2b6e; background: linear-gradient(135deg, #1a4faf 0%, #0d2b6e 100%); color: #fff; }
+        .province-info-card.rareplus    { border: 2px solid #4338ca; background: linear-gradient(135deg, #c7d2fe 0%, #818cf8 100%); }
         .province-info-card.rarestar    { border: 2px solid #2196f3; background: linear-gradient(135deg, #bbdefb 0%, #64b5f6 100%); }
         .province-info-card.rare        { border: 2px solid #00acc1; background: linear-gradient(135deg, #e0f7fa 0%, #80deea 100%); }
         .province-info-card.uncommon    { border: 2px solid #2e7d32; background: linear-gradient(135deg, #c8e6c9 0%, #81c784 100%); }
@@ -922,8 +922,10 @@
         .profile-avatar {
             width: 36px; height: 36px;
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 1.2em; font-weight: bold; flex-shrink: 0;
+            border-radius: 8px; display: flex; align-items: center; justify-content: center;
+            font-size: 1.2em; font-weight: bold; flex-shrink: 0; overflow: hidden;
+            border: 2px solid rgba(240,147,251,0.8);
+            box-shadow: 0 0 8px rgba(240,147,251,0.5);
         }
         .profile-info { display: flex; flex-direction: column; align-items: flex-start; }
         .profile-nickname { font-size: 0.95em; font-weight: bold; color: #fff; line-height: 1.2; }
@@ -933,6 +935,54 @@
             background: #4caf50; margin-left: auto; flex-shrink: 0;
             box-shadow: 0 0 6px rgba(76,175,80,0.8);
         }
+        .profile-avatar img { width: 100%; height: 100%; border-radius: 0; object-fit: cover; }
+
+        /* ============================================ */
+        /* AVATAR PICKER OVERLAY                        */
+        /* ============================================ */
+        #avatar-picker-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.75); z-index: 20000;
+            align-items: center; justify-content: center;
+        }
+        #avatar-picker-box {
+            background: #1a1a2e;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 20px; padding: 28px 28px 20px;
+            width: 340px; text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        }
+        #avatar-picker-box h3 { color: #fff; margin: 0 0 20px; font-size: 1.1em; }
+        .avatar-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 12px; margin-bottom: 20px;
+        }
+        .avatar-option {
+            width: 84px; height: 84px; border-radius: 14px; overflow: hidden;
+            cursor: pointer; border: 3px solid transparent;
+            transition: all 0.2s; margin: auto;
+        }
+        .avatar-option img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .avatar-option:hover { border-color: rgba(240,147,251,0.8); transform: scale(1.07); }
+        .avatar-option.selected {
+            border-color: #f5576c;
+            box-shadow: 0 0 16px rgba(245,87,108,0.7);
+            transform: scale(1.07);
+        }
+        #btn-avatar-close {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+            color: #fff; padding: 9px 24px; border-radius: 10px;
+            cursor: pointer; font-size: 0.9em; transition: background 0.2s;
+        }
+        #btn-avatar-close:hover { background: rgba(255,255,255,0.2); }
+        .btn-change-avatar {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(240,147,251,0.15); border: 1px solid rgba(240,147,251,0.4);
+            color: #f093fb; padding: 7px 16px; border-radius: 10px;
+            cursor: pointer; font-size: 0.85em; margin: 10px 0 4px;
+            transition: all 0.2s;
+        }
+        .btn-change-avatar:hover { background: rgba(240,147,251,0.28); }
 
         /* ============================================ */
         /* AUTO MODE INDICATOR */
@@ -1111,7 +1161,7 @@
         .enc-rarity-badge.mythic      { background: linear-gradient(135deg,#fff3e0,#ff6d00); color: #fff; border-color: #ff6d00; }
         .enc-rarity-badge.legendary   { background: linear-gradient(135deg,#fff9c4,#ffd700); color: #5d4037; border-color: #ffd700; }
         .enc-rarity-badge.epic        { background: linear-gradient(135deg,#e1bee7,#9c27b0); color: #fff; border-color: #9c27b0; }
-        .enc-rarity-badge.rareplus    { background: linear-gradient(135deg,#1a4faf,#0d2b6e); color: #fff; border-color: #0d2b6e; }
+        .enc-rarity-badge.rareplus    { background: linear-gradient(135deg,#818cf8,#4338ca); color: #fff; border-color: #4338ca; }
         .enc-rarity-badge.rarestar    { background: linear-gradient(135deg,#bbdefb,#2196f3); color: #fff; border-color: #2196f3; }
         .enc-rarity-badge.rare        { background: linear-gradient(135deg,#e0f7fa,#00acc1); color: #fff; border-color: #00acc1; }
         .enc-rarity-badge.uncommon    { background: linear-gradient(135deg,#c8e6c9,#2e7d32); color: #fff; border-color: #2e7d32; }
@@ -2196,8 +2246,8 @@
                     <div class="enc-rarity-row">
                         <span class="enc-rarity-chip" style="background:linear-gradient(135deg,#fff3e0,#ffcc80);color:#bf360c;">👑 SDA Unggulan — Power 10</span>
                         <span class="enc-rarity-chip" style="background:linear-gradient(135deg,#fff9c4,#fff59d);color:#5d4037;">🔥 Bangunan Bersejarah — Power 9</span>
-                        <span class="enc-rarity-chip" style="background:linear-gradient(135deg,#e1bee7,#ce93d8);color:#4a148c;">👾 Sektor Ekonomi — Power 8</span>
-                        <span class="enc-rarity-chip" style="background:linear-gradient(135deg,#1a4faf,#0d2b6e);color:#fff;">💎 Rumah Adat — Power 7</span>
+                        <span class="enc-rarity-chip" style="background:linear-gradient(135deg,#818cf8,#4338ca);color:#fff;">💎 Sektor Ekonomi — Power 7</span>
+                        <span class="enc-rarity-chip" style="background:linear-gradient(135deg,#e1bee7,#ce93d8);color:#4a148c;">👾 Rumah Adat — Power 8</span>
                         <span class="enc-rarity-chip" style="background:linear-gradient(135deg,#bbdefb,#64b5f6);color:#0d47a1;">💙 Senjata Tradisional — Power 6</span>
                         <span class="enc-rarity-chip" style="background:linear-gradient(135deg,#e0f7fa,#80deea);color:#006064;">💠 Pakaian Adat — Power 5</span>
                         <span class="enc-rarity-chip" style="background:linear-gradient(135deg,#c8e6c9,#81c784);color:#1b5e20;">💚 Alat Musik — Power 4</span>
@@ -2486,6 +2536,9 @@
             <!-- Tab: Profil Pemain -->
             <div id="tab-profil" class="profile-panel active">
                 <div class="profile-panel-title">👤 Profil Pemain</div>
+                <div style="text-align:center;margin-bottom:4px;">
+                    <button class="btn-change-avatar" onclick="playSound('button');showAvatarPicker()">🖼️ Ganti Foto Profil</button>
+                </div>
                 <div class="profile-info-row">
                     <span class="profile-info-label">Nickname</span>
                     <span class="profile-info-value" id="prf-nickname">-</span>
@@ -3399,16 +3452,52 @@
         // =============================================
         // PROFILE BADGE
         // =============================================
+        // =============================================
+        // AVATAR FOTO PROFIL
+        // =============================================
+        let _selectedAvatar = localStorage.getItem('selectedAvatar') || null;
+
+        function updateProfileAvatar() {
+            const el = document.getElementById('profile-avatar');
+            if (_selectedAvatar) {
+                el.innerHTML = `<img src="gambar/avatar/avatar${_selectedAvatar}.png" alt="avatar">`;
+            } else {
+                const nickname = document.getElementById('profile-nickname-display').textContent || '?';
+                el.textContent = nickname.charAt(0).toUpperCase();
+            }
+        }
+
+        function showAvatarPicker() {
+            const overlay = document.getElementById('avatar-picker-overlay');
+            overlay.style.display = 'flex';
+            for (let i = 0; i < 6; i++) {
+                document.getElementById('av-opt-' + i).classList.toggle('selected', _selectedAvatar === String(i + 1));
+            }
+        }
+
+        function hideAvatarPicker() {
+            document.getElementById('avatar-picker-overlay').style.display = 'none';
+        }
+
+        function selectAvatar(index) {
+            _selectedAvatar = String(index + 1);
+            localStorage.setItem('selectedAvatar', _selectedAvatar);
+            for (let i = 0; i < 6; i++) {
+                document.getElementById('av-opt-' + i).classList.toggle('selected', i === index);
+            }
+            updateProfileAvatar();
+        }
+
         function showProfileBadge(uid, nickname) {
             document.getElementById('profile-nickname-display').textContent = nickname;
-            
+
             // Tampilkan ID pendek (6 karakter terakhir UID)
             const shortId = uid.slice(-6).toUpperCase();
             document.getElementById('profile-id-display').textContent = `ID: #${shortId}`;
-            
-            // Avatar huruf pertama nickname
-            document.getElementById('profile-avatar').textContent = nickname.charAt(0).toUpperCase();
-            
+
+            // Avatar: foto jika dipilih, atau huruf pertama
+            updateProfileAvatar();
+
             // Klik badge untuk buka profil
             document.getElementById('profile-badge').onclick = showProfileScreen;
             document.getElementById('profile-badge').title = 'Lihat profil pemain';
@@ -4093,8 +4182,8 @@
             { name: "Aceh", cards: [
                 { name: "Kopi Gayo",                  type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Masjid Raya Baiturrahman",   type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Pertanian Kopi",             type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumoh Aceh",                 type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Pertanian Kopi",             type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumoh Aceh",                 type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Rencong",                    type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Ulee Balang",                type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Serune Kalee",               type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4105,8 +4194,8 @@
             { name: "Sumatera Utara", cards: [
                 { name: "Karet & Kelapa Sawit",       type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Istana Maimun",              type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Perkebunan Sawit",           type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Bolon",                type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Perkebunan Sawit",           type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Bolon",                type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Piso Gaja Dompak",           type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Ulos",                       type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Gondang Sabangunan",         type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4117,8 +4206,8 @@
             { name: "Sumatera Barat", cards: [
                 { name: "Gambir & Kulit Manis",       type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Jam Gadang",                 type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Perdagangan Rempah",         type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Gadang",               type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Perdagangan Rempah",         type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Gadang",               type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Karih",                      type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Bundo Kanduang",             type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Saluang",                    type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4129,8 +4218,8 @@
             { name: "Riau", cards: [
                 { name: "Minyak Bumi",                type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Istana Siak",                type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Pertambangan Minyak",        type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Selaso Jatuh Kembar",  type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Pertambangan Minyak",        type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Selaso Jatuh Kembar",  type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Pedang Jenawi",              type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Teluk Belanga",              type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Gambus",                     type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4141,8 +4230,8 @@
             { name: "Kepulauan Riau", cards: [
                 { name: "Bauksit & Timah",            type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Benteng Fort de Kock",       type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Perikanan Laut",             type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Belah Bubung",         type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Perikanan Laut",             type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Belah Bubung",         type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Badik Tumbuk Lada",          type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Kebaya Labuh",               type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Gong",                       type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4153,8 +4242,8 @@
             { name: "Jambi", cards: [
                 { name: "Batubara & Karet",           type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Candi Muaro Jambi",          type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Perkebunan Karet",           type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Kajang Leko",          type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Perkebunan Karet",           type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Kajang Leko",          type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Keris Siginjai",             type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Baju Kurung Tanggung",       type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Kelintang",                  type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4165,8 +4254,8 @@
             { name: "Bengkulu", cards: [
                 { name: "Batubara & Emas",            type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Benteng Marlborough",        type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Pertambangan Batu Bara",     type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Bubungan Lima",        type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Pertambangan Batu Bara",     type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Bubungan Lima",        type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Rudus",                      type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Pakaian Rejang Lebong",      type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Dol",                        type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4177,8 +4266,8 @@
             { name: "Sumatera Selatan", cards: [
                 { name: "Minyak & Gas Bumi",          type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Jembatan Ampera",            type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Pertambangan Minyak",        type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Limas",                type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Pertambangan Minyak",        type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Limas",                type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Tombak Trisula",             type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Aesan Gede",                 type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Accordion Palembang",        type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4189,8 +4278,8 @@
             { name: "Bangka Belitung", cards: [
                 { name: "Timah",                      type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Benteng Kuto Panji",         type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Pertambangan Timah",         type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Rakit",                type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Pertambangan Timah",         type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Rakit",                type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Siwar",                      type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Pakaian Seting",             type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Dambus",                     type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4201,8 +4290,8 @@
             { name: "Lampung", cards: [
                 { name: "Kopi Robusta Lampung",       type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Menara Siger",               type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Perkebunan Kopi",            type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Nuwou Sesat",          type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Perkebunan Kopi",            type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Nuwou Sesat",          type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Terapang",                   type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Pakaian Tulang Bawang",      type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Gamolan Pekhing",            type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4213,8 +4302,8 @@
             { name: "DKI Jakarta", cards: [
                 { name: "Industri & Perdagangan",     type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Kota Tua Jakarta",           type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Perdagangan & Jasa",         type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Kebaya",               type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Perdagangan & Jasa",         type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Kebaya",               type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Golok",                      type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Kebaya Encim",               type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Tehyan",                     type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4225,8 +4314,8 @@
             { name: "Jawa Barat", cards: [
                 { name: "Teh & Kina",                 type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Keraton Kasepuhan Cirebon",  type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Perkebunan Teh",             type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Kasepuhan",            type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Perkebunan Teh",             type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Kasepuhan",            type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Kujang",                     type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Kebaya Sunda",               type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Angklung",                   type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4237,8 +4326,8 @@
             { name: "Banten", cards: [
                 { name: "Baja & Industri",            type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Masjid Agung Banten",        type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Industri Baja",              type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Baduy",                type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Industri Baja",              type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Baduy",                type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Golok Ciomas",               type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Pakaian Pangsi",             type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Dogdog Lojor",               type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4249,8 +4338,8 @@
             { name: "Jawa Tengah", cards: [
                 { name: "Batik & Tekstil",            type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Candi Borobudur",            type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Industri Tekstil",           type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Joglo",                type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Industri Tekstil",           type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Joglo",                type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Keris",                      type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Kebaya Jawa",                type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Gamelan",                    type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4261,8 +4350,8 @@
             { name: "DI Yogyakarta", cards: [
                 { name: "Batik Yogyakarta",           type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Keraton Yogyakarta",         type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Industri Kerajinan",         type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Bangsal Kencono",            type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Industri Kerajinan",         type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Bangsal Kencono",            type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Keris Yogyakarta",           type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Kebaya Kesatrian",           type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Gamelan Yogyakarta",         type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4273,8 +4362,8 @@
             { name: "Jawa Timur", cards: [
                 { name: "Garam & Tembakau",           type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Candi Penataran",            type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Industri Garam",             type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Situbondo",            type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Industri Garam",             type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Situbondo",            type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Clurit",                     type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Pesa'an",                    type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Saronen",                    type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4285,8 +4374,8 @@
             { name: "Bali", cards: [
                 { name: "Kopi Kintamani",             type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Pura Besakih",               type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Pariwisata Budaya",          type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Gapura Candi Bentar",  type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Pariwisata Budaya",          type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Gapura Candi Bentar",  type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Keris Bali",                 type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Payas Agung",                type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Gamelan Bali",               type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4297,8 +4386,8 @@
             { name: "Nusa Tenggara Barat", cards: [
                 { name: "Mutiara Lombok",             type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Istana Dalam Loka",          type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Budidaya Mutiara",           type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Dalam Loka",           type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Budidaya Mutiara",           type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Dalam Loka",           type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Keris NTB",                  type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Lambung",                    type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Serunai NTB",                type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4309,8 +4398,8 @@
             { name: "Nusa Tenggara Timur", cards: [
                 { name: "Kopi Flores & Cendana",      type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Benteng Portugis Solor",     type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Peternakan Sapi",            type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Musalaki",             type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Peternakan Sapi",            type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Musalaki",             type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Sundu",                      type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Pakaian Amarasi",            type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Sasando",                    type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4321,8 +4410,8 @@
             { name: "Kalimantan Barat", cards: [
                 { name: "Bauksit & Emas",             type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Keraton Kadriyah Pontianak", type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Pertambangan Bauksit",       type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Panjang",              type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Pertambangan Bauksit",       type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Panjang",              type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Mandau",                     type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "King Baba",                  type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Sape",                       type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4333,8 +4422,8 @@
             { name: "Kalimantan Tengah", cards: [
                 { name: "Rotan & Kayu Ulin",          type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Istana Kuning Sampit",       type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Kehutanan & Rotan",          type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Betang",               type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Kehutanan & Rotan",          type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Betang",               type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Mandau Kalteng",             type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Sangkarut",                  type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Garantung",                  type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4345,8 +4434,8 @@
             { name: "Kalimantan Selatan", cards: [
                 { name: "Intan & Batubara",           type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Masjid Sultan Suriansyah",   type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Pertambangan Intan",         type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Bubungan Tinggi",      type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Pertambangan Intan",         type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Bubungan Tinggi",      type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Keris Banjar",               type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Babaju Kun Galung",          type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Panting",                    type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4357,8 +4446,8 @@
             { name: "Kalimantan Timur", cards: [
                 { name: "Minyak & Gas Kaltim",        type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Keraton Kutai Kartanegara",  type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Pertambangan Migas",         type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Lamin",                type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Pertambangan Migas",         type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Lamin",                type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Mandau Kaltim",              type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Kustin",                     type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Sape Kaltim",                type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4369,8 +4458,8 @@
             { name: "Kalimantan Utara", cards: [
                 { name: "Gas Alam & Kelapa Sawit",    type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Benteng Tarakan",            type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Perikanan & Kehutanan",      type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Baloy",                type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Perikanan & Kehutanan",      type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Baloy",                type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Mandau Kalut",               type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Ta'a",                       type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Sampe",                      type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4381,8 +4470,8 @@
             { name: "Sulawesi Utara", cards: [
                 { name: "Kelapa & Cengkeh",           type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Benteng Moraya",             type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Perikanan Laut",             type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Walewangko",           type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Perikanan Laut",             type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Walewangko",           type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Keris Sulut",                type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Laku Tepu",                  type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Kolintang",                  type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4393,8 +4482,8 @@
             { name: "Gorontalo", cards: [
                 { name: "Jagung & Ikan Tuna",         type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Benteng Otanaha",            type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Pertanian Jagung",           type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Dulohupa",             type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Pertanian Jagung",           type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Dulohupa",             type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Wamilo",                     type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Biliu",                      type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Polopalo",                   type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4405,8 +4494,8 @@
             { name: "Sulawesi Tengah", cards: [
                 { name: "Nikel & Emas Sulteng",       type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Masjid Tua Luwuk",           type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Pertambangan Nikel",         type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Tambi",                type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Pertambangan Nikel",         type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Tambi",                type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Pasatimpo",                  type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Koje",                       type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Ganda",                      type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4417,8 +4506,8 @@
             { name: "Sulawesi Barat", cards: [
                 { name: "Kakao & Kelapa Sulbar",      type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Istana Malaweg",             type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Perkebunan Kakao",           type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Boyang",               type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Perkebunan Kakao",           type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Boyang",               type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Badik Sulbar",               type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Pattuqduq Towaine",          type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Kecapi Sulbar",              type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4429,8 +4518,8 @@
             { name: "Sulawesi Selatan", cards: [
                 { name: "Nikel & Besi Sulsel",        type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Benteng Rotterdam",          type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Pertambangan Nikel",         type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Tongkonan",            type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Pertambangan Nikel",         type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Tongkonan",            type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Badik",                      type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Baju Bodo",                  type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Kecapi Sulsel",              type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4441,8 +4530,8 @@
             { name: "Sulawesi Tenggara", cards: [
                 { name: "Nikel & Aspal Buton",        type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Benteng Keraton Buton",      type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Pertambangan Aspal",         type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Istana Buton",         type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Pertambangan Aspal",         type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Istana Buton",         type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Keris Sultra",               type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Babu Nggawi",                type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Ladolado",                   type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4453,8 +4542,8 @@
             { name: "Maluku", cards: [
                 { name: "Pala & Cengkeh Maluku",      type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Benteng Belgica Banda",      type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Perkebunan Rempah",          type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Baileo",               type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Perkebunan Rempah",          type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Baileo",               type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Parang Salawaku",            type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Baju Cele",                  type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Tifa",                       type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4465,8 +4554,8 @@
             { name: "Maluku Utara", cards: [
                 { name: "Nikel & Cengkeh Malut",      type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Benteng Tolukko Ternate",    type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Pertambangan Nikel",         type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Sasadu",               type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Pertambangan Nikel",         type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Sasadu",               type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Parang Malut",               type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Manteren Lamo",              type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Tifa Malut",                 type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4477,8 +4566,8 @@
             { name: "Papua", cards: [
                 { name: "Emas & Tembaga Freeport",    type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Tugu MacArthur Jayapura",    type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Pertambangan Emas",          type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Honai",                type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Pertambangan Emas",          type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Honai",                type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Pisau Belati Papua",         type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Koteka",                     type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Tifa Papua",                 type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4489,8 +4578,8 @@
             { name: "Papua Barat", cards: [
                 { name: "Gas Alam & Ikan Laut",       type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Tugu Jepang Manokwari",      type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Perikanan & Migas",          type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Mod Aki Aksa",         type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Perikanan & Migas",          type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Mod Aki Aksa",         type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Pisau Pabar",                type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Ewer",                       type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Tifa Pabar",                 type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4501,8 +4590,8 @@
             { name: "Papua Selatan", cards: [
                 { name: "Kayu & Hasil Hutan",         type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Situs Megalitik Okaba",      type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Kehutanan",                  type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Gotad",                type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Kehutanan",                  type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Gotad",                type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Pisau Pasel",                type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Pummi",                      type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Tifa Pasel",                 type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4513,8 +4602,8 @@
             { name: "Papua Tengah", cards: [
                 { name: "Emas & Hasil Hutan Pateng",  type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Situs Prasejarah Lembah Baliem", type: "Bangunan Bersejarah", rarity: "legendary", power: 9 },
-                { name: "Pertanian & Kehutanan",      type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Karapao",              type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Pertanian & Kehutanan",      type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Karapao",              type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Pisau Pateng",               type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Sali",                       type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Tifa Pateng",                type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4525,8 +4614,8 @@
             { name: "Papua Pegunungan", cards: [
                 { name: "Hasil Hutan & Kopi",         type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Monumen Yalimo",             type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Pertanian Pegunungan",       type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Honai Pegunungan",     type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Pertanian Pegunungan",       type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Honai Pegunungan",     type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Pisau Peg",                  type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Yokal",                      type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Pikon",                      type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -4537,8 +4626,8 @@
             { name: "Papua Barat Daya", cards: [
                 { name: "Ikan & Mutiara Sorong",      type: "SDA Unggulan",        rarity: "mythic",      power: 10 },
                 { name: "Benteng VOC Sorong",         type: "Bangunan Bersejarah", rarity: "legendary",   power: 9 },
-                { name: "Perikanan & Pariwisata",     type: "Sektor Ekonomi",      rarity: "epic",        power: 8 },
-                { name: "Rumah Kambik",               type: "Rumah Adat",          rarity: "rareplus",    power: 7 },
+                { name: "Perikanan & Pariwisata",     type: "Sektor Ekonomi",      rarity: "rareplus",    power: 7 },
+                { name: "Rumah Kambik",               type: "Rumah Adat",          rarity: "epic",        power: 8 },
                 { name: "Pisau Pabarday",             type: "Senjata Tradisional", rarity: "rarestar",    power: 6 },
                 { name: "Boe",                        type: "Pakaian Adat",        rarity: "rare",        power: 5 },
                 { name: "Tifa Pabarday",              type: "Alat Musik",          rarity: "uncommon",    power: 4 },
@@ -8198,7 +8287,7 @@
                 const cardsRow = document.createElement('div');
                 cardsRow.className = 'enc-cards-row';
 
-                prov.cards.forEach(cardData => {
+                [...prov.cards].sort((a, b) => b.power - a.power).forEach(cardData => {
                     const fullCard = { ...cardData, id: 'enc_' + cardData.name, province: prov.name };
                     const cardEl = createCardElement(fullCard);
                     cardEl.style.cursor = 'default';
@@ -8359,5 +8448,21 @@
 
     <!-- TOAST CONTAINER -->
     <div id="toast-container"></div>
+
+    <!-- AVATAR PICKER OVERLAY -->
+    <div id="avatar-picker-overlay" onclick="if(event.target===this)hideAvatarPicker()">
+        <div id="avatar-picker-box">
+            <h3>🖼️ Pilih Foto Profil</h3>
+            <div class="avatar-grid">
+                <div class="avatar-option" id="av-opt-0" onclick="selectAvatar(0)"><img src="gambar/avatar/avatar1.png" alt="Avatar 1" onerror="this.parentElement.textContent='👤'"></div>
+                <div class="avatar-option" id="av-opt-1" onclick="selectAvatar(1)"><img src="gambar/avatar/avatar2.png" alt="Avatar 2" onerror="this.parentElement.textContent='👤'"></div>
+                <div class="avatar-option" id="av-opt-2" onclick="selectAvatar(2)"><img src="gambar/avatar/avatar3.png" alt="Avatar 3" onerror="this.parentElement.textContent='👤'"></div>
+                <div class="avatar-option" id="av-opt-3" onclick="selectAvatar(3)"><img src="gambar/avatar/avatar4.png" alt="Avatar 4" onerror="this.parentElement.textContent='👤'"></div>
+                <div class="avatar-option" id="av-opt-4" onclick="selectAvatar(4)"><img src="gambar/avatar/avatar5.png" alt="Avatar 5" onerror="this.parentElement.textContent='👤'"></div>
+                <div class="avatar-option" id="av-opt-5" onclick="selectAvatar(5)"><img src="gambar/avatar/avatar6.png" alt="Avatar 6" onerror="this.parentElement.textContent='👤'"></div>
+            </div>
+            <button id="btn-avatar-close" onclick="hideAvatarPicker()">✕ Tutup</button>
+        </div>
+    </div>
 </body>
 </html>
