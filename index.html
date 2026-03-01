@@ -7823,6 +7823,7 @@
                         fromUid: currentUser.uid,
                         fromName: currentNickname || 'Player',
                         partyId: _partyId,
+                        slotNum: slotNum,
                         timestamp: Date.now()
                     });
                     partyInviteRef.onDisconnect().remove();
@@ -8023,7 +8024,7 @@
             _isPartyGuest = true;
             _setPresenceStatus('inLobby');
             showToast('✅ Undangan diterima! Menunggu host memulai...', 'success');
-            _showGuestPartyLobby(inv.fromUid, inv.fromName);
+            _showGuestPartyLobby(inv.fromUid, inv.fromName, inv.slotNum || 2);
             // Pasang listener sinyal partyStart dari host
             _startPartySignalListener(inv.partyId);
         }
@@ -8047,7 +8048,9 @@
             });
         }
 
-        function _showGuestPartyLobby(hostUid, hostName) {
+        function _showGuestPartyLobby(hostUid, hostName, mySlotNum) {
+            mySlotNum = mySlotNum || 2;
+            const otherSlotNum = mySlotNum === 2 ? 3 : 2;
             // Slot 1: Tampilkan host dengan avatar + rank frame
             document.getElementById('pslot-1-name').textContent = escHtml(hostName);
             document.getElementById('pslot-1-icon').textContent = '⌛';
@@ -8062,22 +8065,22 @@
                 const el = document.getElementById('pslot-1-icon');
                 if (el) el.innerHTML = `<div style="width:54px;height:54px;border-radius:10px;overflow:hidden;${fStyle}display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f093fb,#f5576c);font-size:1.4em;font-weight:bold;color:white;"><img src="gambar/avatar/avatar${avNum}.png" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.textContent='${init}'"></div>`;
             }).catch(() => {});
-            // Slot 2: Diri sendiri (tamu) dengan style "joined" (hijau)
-            const slot2 = document.getElementById('pslot-2');
-            slot2.className = 'party-slot joined';
-            slot2.onclick = null;
-            document.getElementById('pslot-2-icon').innerHTML = _getAvatarWithFrameHtml(54);
-            document.getElementById('pslot-2-name').textContent = escHtml(currentNickname || 'Kamu');
-            document.getElementById('pslot-2-sub').textContent  = 'Siap bermain!';
-            document.getElementById('pslot-2-clear').style.display = 'none';
-            // Slot 3: Non-interaktif (menunggu)
-            const slot3 = document.getElementById('pslot-3');
-            slot3.className = 'party-slot waiting';
-            slot3.onclick = null;
-            document.getElementById('pslot-3-icon').textContent = '⌛';
-            document.getElementById('pslot-3-name').textContent = 'Menunggu...';
-            document.getElementById('pslot-3-sub').textContent  = '';
-            document.getElementById('pslot-3-clear').style.display = 'none';
+            // Slot milik saya: tampilkan diri sendiri
+            const mySlotEl = document.getElementById(`pslot-${mySlotNum}`);
+            mySlotEl.className = 'party-slot joined';
+            mySlotEl.onclick = null;
+            document.getElementById(`pslot-${mySlotNum}-icon`).innerHTML = _getAvatarWithFrameHtml(54);
+            document.getElementById(`pslot-${mySlotNum}-name`).textContent = escHtml(currentNickname || 'Kamu');
+            document.getElementById(`pslot-${mySlotNum}-sub`).textContent  = 'Siap bermain!';
+            document.getElementById(`pslot-${mySlotNum}-clear`).style.display = 'none';
+            // Slot tamu lain: non-interaktif (menunggu)
+            const otherSlotEl = document.getElementById(`pslot-${otherSlotNum}`);
+            otherSlotEl.className = 'party-slot waiting';
+            otherSlotEl.onclick = null;
+            document.getElementById(`pslot-${otherSlotNum}-icon`).textContent = '⌛';
+            document.getElementById(`pslot-${otherSlotNum}-name`).textContent = 'Menunggu...';
+            document.getElementById(`pslot-${otherSlotNum}-sub`).textContent  = '';
+            document.getElementById(`pslot-${otherSlotNum}-clear`).style.display = 'none';
             // Sembunyikan tombol Mulai (tamu tidak bisa memulai)
             const lobbyCard = document.querySelector('.party-lobby-card');
             if (lobbyCard) lobbyCard.querySelector('.party-btn-start').style.display = 'none';
@@ -8085,7 +8088,7 @@
             _stopPartyPresenceListener();
             document.getElementById('party-friend-picker').style.display = 'none';
             document.getElementById('party-lobby-overlay').style.display = 'flex';
-            // Listener real-time: update slot 3 saat tamu ke-2 menerima undangan host
+            // Listener real-time: update slot tamu lain saat mereka menerima undangan host
             if (_guestPartyStatusRef) { _guestPartyStatusRef.off(); _guestPartyStatusRef = null; }
             if (_partyId && currentUser) {
                 _guestPartyStatusRef = db.ref(`users/${hostUid}/partyStatus/${_partyId}`);
@@ -8093,17 +8096,17 @@
                     const uid = snap.key;
                     const val = snap.val();
                     if (!val || !val.accepted || uid === currentUser.uid) return;
-                    // Tamu lain menerima → update slot 3 dan catat UID-nya
+                    // Tamu lain menerima → update slot yang satunya lagi
                     _guestSlot3Uid = uid;
                     const theirName = val.acceptorName || 'Tamu';
-                    const s3 = document.getElementById('pslot-3');
-                    if (!s3) return;
-                    s3.className = 'party-slot joined';
-                    s3.onclick = null;
-                    document.getElementById('pslot-3-name').textContent = escHtml(theirName);
-                    document.getElementById('pslot-3-sub').textContent  = 'Siap bermain!';
-                    document.getElementById('pslot-3-clear').style.display = 'none';
-                    document.getElementById('pslot-3-icon').textContent = '⌛';
+                    const sOther = document.getElementById(`pslot-${otherSlotNum}`);
+                    if (!sOther) return;
+                    sOther.className = 'party-slot joined';
+                    sOther.onclick = null;
+                    document.getElementById(`pslot-${otherSlotNum}-name`).textContent = escHtml(theirName);
+                    document.getElementById(`pslot-${otherSlotNum}-sub`).textContent  = 'Siap bermain!';
+                    document.getElementById(`pslot-${otherSlotNum}-clear`).style.display = 'none';
+                    document.getElementById(`pslot-${otherSlotNum}-icon`).textContent = '⌛';
                     Promise.all([
                         db.ref(`userAvatars/${uid}`).get(),
                         db.ref(`users/${uid}/rankData`).get()
@@ -8112,7 +8115,7 @@
                         const rkName = rkSnap.exists() ? (rkSnap.val().rankName || 'Bronze III') : 'Bronze III';
                         const fStyle = _getRankFrameStyle(rkName);
                         const init   = theirName.charAt(0).toUpperCase();
-                        const el = document.getElementById('pslot-3-icon');
+                        const el = document.getElementById(`pslot-${otherSlotNum}-icon`);
                         if (el) el.innerHTML = `<div style="width:54px;height:54px;border-radius:10px;overflow:hidden;${fStyle}display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f093fb,#f5576c);font-size:1.4em;font-weight:bold;color:white;"><img src="gambar/avatar/avatar${avNum}.png" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.textContent='${init}'"></div>`;
                     }).catch(() => {});
                 });
@@ -8134,7 +8137,7 @@
                     else showToast('ℹ️ Kamu telah dikeluarkan dari party.', 'info');
                 });
             }
-            // Listener roster: pantau jika tamu di slot 3 meninggalkan party
+            // Listener roster: pantau jika tamu lain meninggalkan party
             if (_partyGuestRosterRef) { _partyGuestRosterRef.off(); _partyGuestRosterRef = null; }
             _guestSlot3Uid = null;
             if (_partyId && currentUser) {
@@ -8142,7 +8145,8 @@
                 _partyGuestRosterRef.on('child_removed', rSnap => {
                     if (rSnap.key === _guestSlot3Uid) {
                         _guestSlot3Uid = null;
-                        _resetSlot3();
+                        if (otherSlotNum === 2) _resetSlot2();
+                        else _resetSlot3();
                     }
                 });
             }
