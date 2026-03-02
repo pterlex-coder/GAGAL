@@ -4109,10 +4109,8 @@
                     document.getElementById('profile-badge').style.display = 'block';
                 } else {
                     // Pesan lain (misal LOG) tiba sebelum GAME_STATE_UPDATE.
-                    // Set ID sementara agar handleServerMessage bisa render UI,
-                    // tapi JANGAN ganti ws.onmessage — tunggu GAME_STATE_UPDATE.
-                    currentRoomId = roomId;
-                    myPlayerId = playerId;
+                    // Jangan set currentRoomId dulu — tunggu konfirmasi GAME_STATE_UPDATE
+                    // agar party invite tidak salah dianggap sedang dalam pertandingan
                     handleServerMessage(data);
                 }
             };
@@ -4308,13 +4306,16 @@
                     lsDel(LS.PLAYER_ID);
                 }
             }
+            // Cleanup party lobby saat halaman ditutup/refresh
             if (_partyId && currentUser) {
                 if (_isPartyGuest) {
+                    // Tamu keluar → hapus dari roster & beritahu host
                     db.ref(`partyRoster/${_partyId}/${currentUser.uid}`).remove();
                     if (_partyHostUid) {
                         db.ref(`users/${_partyHostUid}/partyStatus/${_partyId}/${currentUser.uid}`).remove();
                     }
                 } else {
+                    // Host keluar → bubarkan semua
                     db.ref(`partyRoster/${_partyId}`).remove();
                     db.ref(`users/${currentUser.uid}/partyStatus`).remove();
                     if (_partyFriendUid)  db.ref(`users/${_partyFriendUid}/partyKick`).set({ disbanded: true });
@@ -4323,6 +4324,7 @@
                     if (_partyFriend2Uid) db.ref(`users/${_partyFriend2Uid}/partyInvite`).remove();
                 }
             }
+            // Cleanup custom room invite yang masih pending saat halaman ditutup/refresh
             if (currentUser) {
                 if (_customRoomSlots && _customRoomSlots.length > 0) {
                     _customRoomSlots.forEach(s => {
@@ -5051,8 +5053,8 @@
                             grid.appendChild(chip);
                         });
                     }
-                    // Untuk custom room: tutup lobby dan tampilkan layar provinsi
-                    if (_customRoomId) {
+                    // Untuk custom room (pemain maupun penonton): tutup lobby dan tampilkan layar provinsi
+                    if (_customRoomId || _customRoomRole) {
                         document.getElementById('custom-room-overlay').style.display = 'none';
                         _stopCustomPresenceListener();
                         document.getElementById('custom-friend-picker').style.display = 'none';
@@ -7826,6 +7828,15 @@
             if (!_partyId) {
                 // Buat partyId baru pertama kali teman dipilih
                 _partyId = `party_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+                if (currentUser) {
+                    // Bersihkan partyStatus lama agar listener tamu tidak baca data basi
+                    db.ref(`users/${currentUser.uid}/partyStatus`).remove().catch(() => {});
+                    // Tulis host ke partyRoster — onDisconnect hapus seluruh roster jika host offline/refresh
+                    // Ini adalah sinyal utama bagi tamu bahwa party bubar
+                    const hostRosterRef = db.ref(`partyRoster/${_partyId}`);
+                    hostRosterRef.set({ host: currentUser.uid }).catch(() => {});
+                    hostRosterRef.onDisconnect().remove();
+                }
             }
             // Sembunyikan picker
             _stopPartyPresenceListener();
@@ -7897,6 +7908,10 @@
                     if (slotNum === 2) _partyStatusRef = null; else _partyStatus2Ref = null;
                     // Tulis roster agar tamu lain dapat pantau kehadiran slot ini
                     if (_partyId) db.ref(`partyRoster/${_partyId}/${uid}`).set(true).catch(() => {});
+                    // Pasang onDisconnect kick ke tamu ini jika host disconnect/refresh
+                    if (currentUser && _partyId) {
+                        db.ref(`users/${uid}/partyKick`).onDisconnect().set({ disbanded: true });
+                    }
                     // Pasang listener roster (sekali saja) untuk deteksi tamu keluar sukarela
                     if (!_partyRosterRef && _partyId) {
                         _partyRosterRef = db.ref(`partyRoster/${_partyId}`);
@@ -8001,12 +8016,19 @@
                 }
                 const inv = snap.val();
                 if (!inv || !inv.fromUid || !inv.partyId) return;
+                // Abaikan undangan yang tidak punya timestamp (data lama dari sesi sebelumnya)
+                if (!inv.timestamp) {
+                    db.ref(`users/${currentUser.uid}/partyInvite`).remove();
+                    return;
+                }
                 // Abaikan undangan lebih dari 2 menit
-                if (inv.timestamp && Date.now() - inv.timestamp > 120000) {
+                if (Date.now() - inv.timestamp > 120000) {
                     db.ref(`users/${currentUser.uid}/partyInvite`).remove();
                     return;
                 }
                 _partyInviteData = inv;
+                // Hapus partyKick lama agar tidak trigger "party dibubarkan" setelah terima undangan baru
+                db.ref(`users/${currentUser.uid}/partyKick`).remove().catch(() => {});
                 document.getElementById('party-invite-msg').textContent =
                     `${inv.fromName || 'Seorang teman'} mengajakmu main bareng!`;
                 document.getElementById('party-invite-popup').style.display = 'flex';
@@ -8017,7 +8039,7 @@
             if (!_partyInviteData || !currentUser) return;
 
             // Tolak jika sedang aktif di game atau custom room
-            if (currentRoomId) {
+            if (currentRoomId && lsGet(LS.GAME_ACTIVE) === 'true') {
                 showToast('⚠️ Kamu sedang dalam pertandingan. Selesaikan dulu.', 'warning');
                 return;
             }
@@ -8025,6 +8047,15 @@
                 showToast('⚠️ Kamu sedang di custom room. Keluar dulu.', 'warning');
                 return;
             }
+
+            // Bersihkan semua listener party lama sebelum join party baru
+            // agar notifikasi "party dibubarkan" dari sesi sebelumnya tidak muncul
+            if (_partyKickRef)        { _partyKickRef.off();        _partyKickRef = null; }
+            if (_partySignalRef)      { _partySignalRef.off();      _partySignalRef = null; }
+            if (_partyGuestRosterRef) { _partyGuestRosterRef.off(); _partyGuestRosterRef = null; }
+            if (_guestPartyStatusRef) { _guestPartyStatusRef.off(); _guestPartyStatusRef = null; }
+            // Hapus partyKick lama dari Firebase agar tidak terbaca lagi
+            db.ref(`users/${currentUser.uid}/partyKick`).remove().catch(() => {});
 
             const inv = _partyInviteData;
             _partyInviteData = null;
@@ -8053,6 +8084,12 @@
             _isPartyGuest = true;
             _setPresenceStatus('inLobby');
             showToast('✅ Undangan diterima! Menunggu host memulai...', 'success');
+            // Pasang onDisconnect: jika tamu offline/refresh → otomatis dihapus dari roster & status
+            const guestRosterRef = db.ref(`partyRoster/${inv.partyId}/${currentUser.uid}`);
+            guestRosterRef.set(true).catch(() => {});
+            guestRosterRef.onDisconnect().remove();
+            const guestStatusRef = db.ref(`users/${inv.fromUid}/partyStatus/${inv.partyId}/${currentUser.uid}`);
+            guestStatusRef.onDisconnect().remove();
             _showGuestPartyLobby(inv.fromUid, inv.fromName, inv.slotNum || 2);
             // Pasang listener sinyal partyStart dari host
             _startPartySignalListener(inv.partyId);
@@ -8169,16 +8206,30 @@
                     else showToast('ℹ️ Kamu telah dikeluarkan dari party.', 'info');
                 });
             }
-            // Listener roster: pantau jika tamu lain meninggalkan party
+            // Listener partyRoster: deteksi host disconnect/refresh (partyRoster terhapus total)
+            // sekaligus deteksi tamu lain keluar
             if (_partyGuestRosterRef) { _partyGuestRosterRef.off(); _partyGuestRosterRef = null; }
             _guestSlot3Uid = null;
             if (_partyId && currentUser) {
                 _partyGuestRosterRef = db.ref(`partyRoster/${_partyId}`);
-                _partyGuestRosterRef.on('child_removed', rSnap => {
-                    if (rSnap.key === _guestSlot3Uid) {
+                _partyGuestRosterRef.on('value', rSnap => {
+                    if (!rSnap.exists()) {
+                        // partyRoster kosong total = host disconnect/refresh → bubarkan
+                        if (!_isPartyGuest) return;
+                        if (_partyKickRef) { _partyKickRef.off(); _partyKickRef = null; }
+                        if (_partySignalRef) { _partySignalRef.off(); _partySignalRef = null; }
+                        _closeGuestPartyLobby();
+                        _partyId = null; _partyQueueSize = null;
+                        _setPresenceStatus('online');
+                        showToast('ℹ️ Party telah dibubarkan oleh host.', 'info');
+                        return;
+                    }
+                    // Cek apakah tamu lain (slot 3) keluar
+                    if (_guestSlot3Uid && !rSnap.child(_guestSlot3Uid).exists()) {
                         _guestSlot3Uid = null;
                         if (otherSlotNum === 2) _resetSlot2();
                         else _resetSlot3();
+                        showToast('ℹ️ Tamu meninggalkan party.', 'info');
                     }
                 });
             }
@@ -8651,8 +8702,13 @@
                     return;
                 }
                 const inv = snap.val();
+                // Abaikan undangan yang tidak punya timestamp (data lama dari sesi sebelumnya)
+                if (!inv.ts) {
+                    db.ref(`users/${currentUser.uid}/customRoomInvite`).remove();
+                    return;
+                }
                 // Abaikan undangan lebih dari 2 menit (invite basi — game mungkin sudah selesai)
-                if (inv.ts && Date.now() - inv.ts > 120000) {
+                if (Date.now() - inv.ts > 120000) {
                     db.ref(`users/${currentUser.uid}/customRoomInvite`).remove();
                     return;
                 }
