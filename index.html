@@ -3460,6 +3460,7 @@
             _startPartyInviteListener();        // dengarkan undangan party dari teman
             _startFriendRequestBadge();         // update badge notifikasi di tombol Teman
             _startCustomRoomInviteListener();   // dengarkan undangan custom room
+            _startCustomKickListener();         // dengarkan notifikasi kick/disband
 
             // Cek & tandai presence (deteksi login di device lain)
             setupPresence(user, nickname);
@@ -3973,6 +3974,7 @@
             _customRoomSlots = [];
             _customPickerSlot = null;
             _pendingCustomJoin = false;
+            if (_customKickRef) { _customKickRef.off(); _customKickRef = null; }
 
             // Bersihkan party state & listener
             if (_partyStatusRef) { _partyStatusRef.off(); _partyStatusRef = null; }
@@ -8283,6 +8285,7 @@
         let _customRoomSlots      = [];     // filled slots [{name, uid}]
         let _customInviteData     = null;   // pending invite data
         let _customInviteRef      = null;   // Firebase listener ref
+        let _customKickRef        = null;   // Firebase listener untuk kick/disband
         let _customPickerSlot     = null;   // which slot index is being filled
         let _pendingCustomJoin    = false;  // menunggu konfirmasi server setelah JOIN_CUSTOM_ROOM
         let _isCustomRoomCreator  = false;  // true = user yang membuat room (bisa tambah/hapus bot)
@@ -8591,6 +8594,14 @@
                 if (_customRoomSlots[slotIndex].pending) {
                     db.ref(`users/${uid}/customRoomInvite`).remove().catch(() => {});
                 }
+            else if (uid) {
+                // Jika pemain sudah join (bukan pending), kirim sinyal kick via Firebase
+                db.ref(`users/${uid}/customKick`).set({
+                    roomId: _customRoomId,
+                    timestamp: Date.now(),
+                    reason: 'kick'
+                }).catch(() => {});
+            }
                 _customRoomSlots[slotIndex] = null;
             }
             _stopCustomPresenceListener();
@@ -8618,6 +8629,20 @@
 
         function leaveCustomRoom() {
             _setPresenceStatus('online');
+            
+            // Jika host (creator) keluar, kirim sinyal disband ke semua member yang sudah join
+            if (_isCustomRoomCreator && _customRoomSlots) {
+                _customRoomSlots.forEach(s => {
+                    if (s && s.uid && !s.isBot) {
+                        db.ref(`users/${s.uid}/customKick`).set({
+                            roomId: _customRoomId,
+                            timestamp: Date.now(),
+                            reason: 'disband'
+                        }).catch(() => {});
+                    }
+                });
+            }
+
             if (ws && ws.readyState === WebSocket.OPEN && _customRoomId) {
                 ws.send(JSON.stringify({ type: 'LEAVE_CUSTOM_ROOM', userUid: currentUser ? currentUser.uid : '' }));
             }
@@ -8721,6 +8746,55 @@
             });
         }
 
+        // Listener untuk notifikasi kick/disband dari custom room
+        function _startCustomKickListener() {
+            if (!currentUser) return;
+            if (_customKickRef) _customKickRef.off();
+            _customKickRef = db.ref(`users/${currentUser.uid}/customKick`);
+            _customKickRef.on('value', snap => {
+                if (snap.exists()) {
+                    const val = snap.val();
+                    // Hapus notifikasi agar tidak terpanggil lagi
+                    db.ref(`users/${currentUser.uid}/customKick`).remove();
+                    
+                    // Jika sedang berada di room yang sama, keluar
+                    if (_customRoomId && val.roomId === _customRoomId) {
+                        leaveCustomRoom();
+                        if (val.reason === 'disband') {
+                            showToast('⚠️ Room dibubarkan oleh host.', 'warning');
+                        } else {
+                            showToast('ℹ️ Anda dikeluarkan dari room.', 'warning');
+                        }
+                    }
+                }
+            });
+        }
+
+        // Listener untuk notifikasi kick/disband dari custom room
+        function _startCustomKickListener() {
+            if (!currentUser) return;
+            if (_customKickRef) _customKickRef.off();
+            _customKickRef = db.ref(`users/${currentUser.uid}/customKick`);
+            _customKickRef.on('value', snap => {
+                if (snap.exists()) {
+                    const val = snap.val();
+                    // Hapus notifikasi agar tidak terpanggil lagi
+                    db.ref(`users/${currentUser.uid}/customKick`).remove();
+                    
+                    // Validasi: pastikan notifikasi kick berasal dari room yang sedang aktif
+                    if (!_customRoomId || val.roomId !== _customRoomId) return;
+
+                    // Jika sedang berada di room yang sama, keluar
+                    leaveCustomRoom();
+                    if (val.reason === 'disband') {
+                        showToast('⚠️ Room dibubarkan oleh host.', 'warning');
+                    } else {
+                        showToast('ℹ️ Anda dikeluarkan dari room.', 'warning');
+                    }
+                }
+            });
+        }
+
         async function acceptCustomRoomInvite() {
             if (!_customInviteData || !currentUser) return;
 
@@ -8748,6 +8822,9 @@
             }
 
             await db.ref(`users/${currentUser.uid}/customRoomInvite`).remove().catch(() => {});
+            
+            // Hapus notifikasi kick lama sebelum join room baru agar tidak langsung keluar
+            await db.ref(`users/${currentUser.uid}/customKick`).remove().catch(() => {});
 
             try {
                 // Sambungkan WS lalu kirim JOIN — jangan tampilkan lobby dulu, tunggu konfirmasi server
