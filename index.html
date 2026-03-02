@@ -8605,6 +8605,15 @@
                     timestamp: Date.now(),
                     reason: 'kick'
                 }).catch(() => {});
+
+                // Kirim sinyal ke server agar state room terupdate (hapus player dari server)
+                if (ws && ws.readyState === WebSocket.OPEN && _customRoomId) {
+                    ws.send(JSON.stringify({
+                        type: 'KICK_FROM_CUSTOM_ROOM',
+                        targetUid: uid,
+                        userUid: currentUser ? currentUser.uid : ''
+                    }));
+                }
             }
                 _customRoomSlots[slotIndex] = null;
             }
