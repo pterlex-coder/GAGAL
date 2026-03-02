@@ -5080,6 +5080,8 @@
 
                 case 'ROOM_DISBANDED':
                     if (_customRoomId) {
+                        // Beritahu server agar currentCustomRoomId di socket guest ikut di-clear
+                        try { ws.send(JSON.stringify({ type: 'LEAVE_CUSTOM_ROOM', userUid: currentUser ? currentUser.uid : '' })); } catch(_) {}
                         _customRoomSlots.forEach(s => {
                             if (s?.pending && s.uid) db.ref(`users/${s.uid}/customRoomInvite`).remove().catch(() => {});
                         });
@@ -5129,6 +5131,7 @@
                     // Sembunyikan match-starting (provinces preview) jika ditampilkan dari custom room
                     const _msEl = document.getElementById('match-starting');
                     if (_msEl) _msEl.style.display = 'none';
+                    _customRoomId     = null;
                     _customPickerSlot = null;
                     _pendingCustomJoin = false;
 
@@ -6070,12 +6073,16 @@
             _pendingCustomJoin = false;
 
             // Bersihkan state party (listener undangan masuk tetap aktif di home screen)
-            // _partyStatusRef adalah listener respons invite yang kamu kirim — tidak perlu aktif saat di home
-            if (_partyStatusRef) { _partyStatusRef.off(); _partyStatusRef = null; }
-            _partyInviteData = null;
-            _partyFriendUid = null;
-            _partyFriendName = null;
-            _partyId = null;
+            // _partyStatusRef/_partyStatus2Ref adalah listener respons invite yang kamu kirim — tidak perlu aktif saat di home
+            if (_partyStatusRef)  { _partyStatusRef.off();  _partyStatusRef  = null; }
+            if (_partyStatus2Ref) { _partyStatus2Ref.off(); _partyStatus2Ref = null; }
+            _partyInviteData  = null;
+            _partyFriendUid   = null; _partyFriendName  = null;
+            _partyFriend2Uid  = null; _partyFriend2Name = null;
+            _partyQueueSize   = null;
+            _partyId          = null;
+            _stopPartyPresenceListener();
+            _stopCustomPresenceListener();
 
             // Bersihkan semua timer dan handler force pick agar tidak bocor ke pertandingan berikutnya
             stopForcePickHeartbeat();
