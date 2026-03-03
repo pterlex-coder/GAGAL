@@ -5234,6 +5234,21 @@
                         }
                         updateGameUI(data.state);
                         addLog(_isSpectator ? '📺 Kamu menonton pertandingan ini.' : '🎮 Game dimulai! Selamat bermain!');
+                        // Pastikan bgMusic2 jalan untuk semua pemain (host, guest, party, custom room)
+                        try {
+                            soundEffects.bgMusic.pause();
+                            soundEffects.bgMusic2.play().catch(() => {
+                                if (window._bgMusic2FirstClickHandler) {
+                                    document.removeEventListener('click', window._bgMusic2FirstClickHandler);
+                                }
+                                window._bgMusic2FirstClickHandler = function() {
+                                    soundEffects.bgMusic2.play().catch(() => {});
+                                    document.removeEventListener('click', window._bgMusic2FirstClickHandler);
+                                    window._bgMusic2FirstClickHandler = null;
+                                };
+                                document.addEventListener('click', window._bgMusic2FirstClickHandler);
+                            });
+                        } catch(e) {}
                     }, 500);
                     break;
 
