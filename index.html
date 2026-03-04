@@ -222,8 +222,9 @@
             justify-content: center;
         }
         .btn-ensiklopedia-style {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
-            box-shadow: 0 4px 14px rgba(240,147,251,0.4) !important;
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%) !important;
+            box-shadow: 0 4px 14px rgba(67,233,123,0.4) !important;
+            color: #0a3d1f !important;
         }
         .btn-teman-style {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
@@ -314,6 +315,48 @@
             height: fit-content;
         }
 		
+        /* PING PANEL */
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: stretch;
+        }
+        .ping-panel {
+            background: rgba(255,255,255,0.1);
+            -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+            border-radius: 8px;
+            padding: 8px 10px;
+        }
+        .ping-title {
+            font-size: 0.82em; font-weight: bold;
+            text-align: center; margin-bottom: 7px;
+            color: rgba(255,255,255,0.8);
+            padding-bottom: 5px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .ping-item {
+            display: flex; align-items: center;
+            justify-content: space-between; gap: 6px;
+            font-size: 0.78em; padding: 4px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .ping-item:last-child { border-bottom: none; }
+        .ping-name {
+            overflow: hidden; text-overflow: ellipsis;
+            white-space: nowrap; flex: 1; min-width: 0;
+            color: rgba(255,255,255,0.85);
+        }
+        .ping-badge {
+            font-size: 0.75em; font-weight: bold;
+            padding: 2px 7px; border-radius: 10px;
+            white-space: nowrap; flex-shrink: 0;
+        }
+        .ping-kuat   { background: rgba(76,175,80,0.25);  color: #81c784; border: 1px solid rgba(76,175,80,0.6);  }
+        .ping-sedang { background: rgba(255,193,7,0.25);  color: #ffd54f; border: 1px solid rgba(255,193,7,0.6);  }
+        .ping-lemah  { background: rgba(244,67,54,0.25);  color: #ef9a9a; border: 1px solid rgba(244,67,54,0.6);  }
+        .ping-unknown{ background: rgba(158,158,158,0.2); color: #bdbdbd; border: 1px solid rgba(158,158,158,0.4);}
+
         .opponents-title {
             font-size: 1.1em; font-weight: bold;
             margin-bottom: 10px; text-align: center;
@@ -534,15 +577,22 @@
         .card.common      { border: 2px solid #9e9e9e; background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%); }
 
         .card.selectable {
-            box-shadow: 0 0 25px rgba(236,72,153,0.8), 0 0 40px rgba(236,72,153,0.6);
-            border: 3px solid rgba(236,72,153,0.9);
-            animation: shakePause 3s ease-in-out infinite;
-            animation-delay: 10s;
+            border: 3px solid transparent;
+            animation: cardGlowIn 0.6s ease-out 5s forwards, shakePause 3s ease-in-out 8s infinite;
             pointer-events: auto !important;
             cursor: pointer !important;
             z-index: 10;
         }
-        .card.selectable:hover { transform: translateY(-8px) scale(1.05) !important; animation: none; }
+        .card.selectable:hover {
+            transform: translateY(-8px) scale(1.05) !important;
+            animation-play-state: paused;
+            box-shadow: 0 0 25px rgba(236,72,153,0.8), 0 0 40px rgba(236,72,153,0.6) !important;
+            border-color: rgba(236,72,153,0.9) !important;
+        }
+        @keyframes cardGlowIn {
+            from { box-shadow: none; border-color: transparent; }
+            to   { box-shadow: 0 0 25px rgba(236,72,153,0.8), 0 0 40px rgba(236,72,153,0.6); border-color: rgba(236,72,153,0.9); }
+        }
         .card.disabled { cursor: default; opacity: 1; }
         .card.locked { cursor: not-allowed; }
         .card.zoom-in { animation: cardZoomIn 0.4s ease-out forwards; }
@@ -884,6 +934,39 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             z-index: 30000;
         }
+
+        #avatar-setup-screen {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 20px;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            z-index: 30000;
+            overflow-y: auto;
+        }
+        .avatar-setup-container {
+            background: rgba(255,255,255,0.15);
+            padding: 36px 36px 28px;
+            border-radius: 20px;
+            -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            width: 100%; max-width: 420px;
+        }
+        .avatar-setup-preview {
+            width: 90px; height: 90px;
+            border-radius: 16px;
+            overflow: hidden;
+            margin: 0 auto 18px;
+            border: 3px solid rgba(255,255,255,0.5);
+            box-shadow: 0 0 20px rgba(255,255,255,0.2);
+        }
+        .avatar-setup-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .nickname-container {
             background: rgba(255,255,255,0.15);
             padding: 40px;
@@ -987,6 +1070,18 @@
         /* ============================================ */
         /* AUTO MODE INDICATOR */
         /* ============================================ */
+        .campus-logo {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            width: 72px;
+            height: 72px;
+            object-fit: contain;
+            border-radius: 8px;
+            z-index: 5;
+            pointer-events: none;
+        }
+
         #auto-mode-indicator {
             display: none;
             position: fixed;
@@ -1648,6 +1743,69 @@
             padding: 8px 18px; font-size: 0.9em; font-weight: bold; cursor: pointer;
         }
         .btn-settings-close:hover { background: #f44336; }
+
+        /* ============================================ */
+        /* PENGEMBANG SCREEN */
+        /* ============================================ */
+        .btn-pengembang-style {
+            background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%) !important;
+            box-shadow: 0 4px 14px rgba(0,114,255,0.45) !important;
+            color: #fff !important;
+        }
+        #pengembang-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            z-index: 15000; flex-direction: column; align-items: center;
+            overflow-y: auto;
+        }
+        .pengembang-header {
+            width: 100%; background: rgba(0,0,0,0.25);
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+            padding: 16px 20px; display: flex; align-items: center;
+            justify-content: space-between; position: sticky; top: 0; z-index: 10;
+            box-sizing: border-box;
+        }
+        .pengembang-title { font-size: 1.4em; font-weight: bold; color: #fff; }
+        .btn-pengembang-close {
+            background: rgba(244,67,54,0.85); color: #fff;
+            border: 1px solid rgba(255,255,255,0.3); border-radius: 10px;
+            padding: 8px 18px; font-size: 0.9em; font-weight: bold; cursor: pointer;
+        }
+        .btn-pengembang-close:hover { background: #f44336; }
+        .pengembang-body {
+            width: 100%; max-width: 520px; padding: 28px 20px;
+            box-sizing: border-box; display: flex; flex-direction: column; gap: 18px;
+        }
+        .dev-panel {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
+            gap: 12px;
+            -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+        }
+        .dev-panel-role {
+            font-size: 0.8em; font-weight: 700; letter-spacing: 1px;
+            text-transform: uppercase; color: #ffd200;
+            background: rgba(255,210,0,0.15); border-radius: 20px;
+            padding: 3px 12px;
+        }
+        .dev-panel-photo {
+            width: 110px; height: 110px;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 3px solid rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.1);
+        }
+        .dev-panel-name {
+            font-size: 1.05em; font-weight: bold; color: #fff;
+            text-align: center;
+        }
+        .dev-panel-info {
+            font-size: 0.85em; color: rgba(255,255,255,0.65);
+            text-align: center; line-height: 1.5;
+        }
         .settings-body {
             width: 100%; max-width: 480px; padding: 28px 20px;
             box-sizing: border-box;
@@ -2175,6 +2333,7 @@
 
     <!-- AUTH SCREEN -->
     <div id="auth-screen" style="display:none;">
+        <img class="campus-logo" src="gambar/logo/Unmuh babel.png" alt="Logo Kampus">
         <div class="auth-container">
             <h1 class="auth-title">👤Account👤<br></h1>
             <div class="auth-tabs">
@@ -2227,8 +2386,32 @@
         </div>
     </div>
 
+    <!-- AVATAR SETUP SCREEN -->
+    <div id="avatar-setup-screen">
+        <div class="avatar-setup-container">
+            <h1 class="nickname-title">🖼️ Pilih Foto Profil</h1>
+            <p class="nickname-subtitle">Pilih avatar yang mewakili kamu!</p>
+            <div class="avatar-setup-preview">
+                <img id="avs-preview-img" src="gambar/avatar/avatar1.png?v=1.0" alt="Preview">
+            </div>
+            <div class="avatar-grid">
+                <div class="avatar-option" id="avs-opt-0" onclick="playSound('button');selectAvatarSetup(0)"><img src="gambar/avatar/avatar1.png?v=1.0" alt="Avatar 1" onerror="this.parentElement.textContent='👤'"></div>
+                <div class="avatar-option" id="avs-opt-1" onclick="playSound('button');selectAvatarSetup(1)"><img src="gambar/avatar/avatar2.png?v=1.0" alt="Avatar 2" onerror="this.parentElement.textContent='👤'"></div>
+                <div class="avatar-option" id="avs-opt-2" onclick="playSound('button');selectAvatarSetup(2)"><img src="gambar/avatar/avatar3.png?v=1.0" alt="Avatar 3" onerror="this.parentElement.textContent='👤'"></div>
+                <div class="avatar-option" id="avs-opt-3" onclick="playSound('button');selectAvatarSetup(3)"><img src="gambar/avatar/avatar4.png?v=1.0" alt="Avatar 4" onerror="this.parentElement.textContent='👤'"></div>
+                <div class="avatar-option" id="avs-opt-4" onclick="playSound('button');selectAvatarSetup(4)"><img src="gambar/avatar/avatar5.png?v=1.0" alt="Avatar 5" onerror="this.parentElement.textContent='👤'"></div>
+                <div class="avatar-option" id="avs-opt-5" onclick="playSound('button');selectAvatarSetup(5)"><img src="gambar/avatar/avatar6.png?v=1.0" alt="Avatar 6" onerror="this.parentElement.textContent='👤'"></div>
+                <div class="avatar-option" id="avs-opt-6" onclick="playSound('button');selectAvatarSetup(6)"><img src="gambar/avatar/avatar7.png?v=1.0" alt="Avatar 7" onerror="this.parentElement.textContent='👤'"></div>
+                <div class="avatar-option" id="avs-opt-7" onclick="playSound('button');selectAvatarSetup(7)"><img src="gambar/avatar/avatar8.png?v=1.0" alt="Avatar 8" onerror="this.parentElement.textContent='👤'"></div>
+                <div class="avatar-option" id="avs-opt-8" onclick="playSound('button');selectAvatarSetup(8)"><img src="gambar/avatar/avatar9.png?v=1.0" alt="Avatar 9" onerror="this.parentElement.textContent='👤'"></div>
+            </div>
+            <button class="btn-auth" onclick="playSound('button');saveAvatarSetup()" style="margin-top:10px;">✅ Pilih & Mulai</button>
+        </div>
+    </div>
+
     <!-- PRE-LOADING SCREEN -->
     <div id="pre-loading-screen" style="display:none;">
+        <img class="campus-logo" src="gambar/logo/Unmuh babel.png" alt="Logo Kampus">
         <div class="pre-loading-content">
             <h1 class="pre-loading-title"></h1>
             <p class="pre-loading-subtitle">Kenali budaya Indonesia melalui permainan kartu!</p>
@@ -2252,6 +2435,7 @@
 
     <!-- MATCHMAKING SCREEN -->
     <div id="matchmaking-screen">
+        <img class="campus-logo" src="gambar/logo/Unmuh babel.png" alt="Logo Kampus">
         <div class="matchmaking-container">
             <div id="matchmaking-idle" style="display:flex;flex-direction:column;align-items:center;width:100%;">
                 <button class="btn-start" onclick="playSound('button');showPartyLobby()">🎮 MAIN ONLINE</button>
@@ -2267,6 +2451,7 @@
                             </div>
                             <button class="btn-encyclopedia btn-kostum-style" onclick="playSound('button');showKostumPicker()">⚔️ Kostum</button>
                             <button class="btn-encyclopedia btn-settings-style" onclick="playSound('button');showSettingsScreen()">⚙️ Pengaturan</button>
+                            <button class="btn-encyclopedia btn-pengembang-style" onclick="playSound('button');showPengembangScreen()">👨‍💻 Pengembang</button>
                         </div>
                     </div>
                     <button class="menu-nav-arrow" onclick="playSound('button');scrollMenuNav(1)">▶</button>
@@ -2887,12 +3072,20 @@
     <div class="game-container" id="game-container">
         <div class="main-content">
 
-            <!-- PANEL KIRI: LAWAN -->
-            <div class="opponents-panel" id="opponents-panel">
-                <div class="opponents-title">🛡️ Lawan 🛡️</div>
-                <div style="margin-bottom:8px; padding:10px; background:rgba(0,0,0,0.2); border-radius:8px; text-align:center;">
-                    <div style="font-size:0.85em; margin-bottom:5px;">📋 Tersisa: <strong id="draw-pile-count-2">0</strong></div>
-                    <div style="font-size:0.85em;">📥 Terpakai: <strong id="discard-pile-count-2">0</strong></div>
+            <!-- KOLOM KIRI -->
+            <div class="left-column">
+                <!-- PANEL LAWAN -->
+                <div class="opponents-panel" id="opponents-panel">
+                    <div class="opponents-title">🛡️ Lawan 🛡️</div>
+                    <div style="margin-bottom:8px; padding:10px; background:rgba(0,0,0,0.2); border-radius:8px; text-align:center;">
+                        <div style="font-size:0.85em; margin-bottom:5px;">📋 Tersisa: <strong id="draw-pile-count-2">0</strong></div>
+                        <div style="font-size:0.85em;">📥 Terpakai: <strong id="discard-pile-count-2">0</strong></div>
+                    </div>
+                </div>
+                <!-- PANEL KONEKSI -->
+                <div class="ping-panel" id="ping-panel">
+                    <div class="ping-title">🛜 Koneksi Pemain</div>
+                    <div id="ping-list"></div>
                 </div>
             </div>
 
@@ -3124,7 +3317,56 @@
         </div>
     </div>
 
+    <!-- PENGEMBANG SCREEN -->
+    <div id="pengembang-screen" style="display:none;">
+        <div class="pengembang-header">
+            <span class="pengembang-title">👨‍💻 Pengembang</span>
+            <button class="btn-pengembang-close" onclick="playSound('x');hidePengembangScreen()">✖ Tutup</button>
+        </div>
+        <div class="pengembang-body">
+
+            <!-- Panel 1: Pembuat -->
+            <div class="dev-panel">
+                <div class="dev-panel-role">Pembuat</div>
+                <img class="dev-panel-photo" src="gambar/pengembang/pembuat.jpg" alt="Foto Pembuat">
+                <div class="dev-panel-name">Nama Pembuat</div>
+                <div class="dev-panel-info">NIM: 000000000</div>
+            </div>
+
+            <!-- Panel 2: Dosen Pembimbing 1 -->
+            <div class="dev-panel">
+                <div class="dev-panel-role">Dosen Pembimbing 1</div>
+                <img class="dev-panel-photo" src="gambar/pengembang/dospem1.jpg" alt="Foto Dosen Pembimbing 1">
+                <div class="dev-panel-name">Nama Dosen Pembimbing 1</div>
+                <div class="dev-panel-info">NBM: 000000000</div>
+            </div>
+
+            <!-- Panel 3: Dosen Pembimbing 2 -->
+            <div class="dev-panel">
+                <div class="dev-panel-role">Dosen Pembimbing 2</div>
+                <img class="dev-panel-photo" src="gambar/pengembang/dospem2.jpg" alt="Foto Dosen Pembimbing 2">
+                <div class="dev-panel-name">Nama Dosen Pembimbing 2</div>
+                <div class="dev-panel-info">NBM: 000000000</div>
+            </div>
+
+            <!-- Panel 4: Dosen Pembimbing Akademik -->
+            <div class="dev-panel">
+                <div class="dev-panel-role">Dosen Pembimbing Akademik</div>
+                <img class="dev-panel-photo" src="gambar/pengembang/dospan.jpg" alt="Foto Dosen Pembimbing Akademik">
+                <div class="dev-panel-name">Nama Dosen Pembimbing Akademik</div>
+                <div class="dev-panel-info">NBM: 000000000</div>
+            </div>
+
+        </div>
+    </div>
+
     <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+        // =============================================
+        // ASSET VERSION (cache busting) — naikkan angka ini setiap upload aset baru
+        // =============================================
+        const ASSET_V = '1.0';
+        const av = (path) => `${path}?v=${ASSET_V}`;
+
         // =============================================
         // FIREBASE INITIALIZATION
         // =============================================
@@ -3168,9 +3410,9 @@
         // Gambar rank: Bronze pakai Bronze.png, dst.
         // Platinum MAX pakai Platinum MAX.png (beda gambar)
         function rankImgSrc(rankName) {
-            if (!rankName) return 'gambar/rank/Bronze.png';
-            if (rankName === 'Platinum MAX') return 'gambar/rank/Platinum MAX.png';
-            return `gambar/rank/${getRankTier(rankName)}.png`;
+            if (!rankName) return av('gambar/rank/Bronze.png');
+            if (rankName === 'Platinum MAX') return av('gambar/rank/Platinum MAX.png');
+            return av(`gambar/rank/${getRankTier(rankName)}.png`);
         }
         function calculateNewRank(rankName, points, position) {
             // Validasi input untuk mencegah crash saat data tidak valid
@@ -3319,6 +3561,37 @@
             document.getElementById('nickname-screen').style.display = 'none';
         }
 
+        let _setupSelectedAvatar = '1';
+
+        function showAvatarSetupScreen() {
+            _setupSelectedAvatar = _selectedAvatar || '1';
+            for (let i = 0; i < 9; i++) {
+                document.getElementById('avs-opt-' + i).classList.toggle('selected', _setupSelectedAvatar === String(i + 1));
+            }
+            const previewImg = document.getElementById('avs-preview-img');
+            if (previewImg) previewImg.src = av(`gambar/avatar/avatar${_setupSelectedAvatar}.png`);
+            document.getElementById('avatar-setup-screen').style.display = 'flex';
+        }
+
+        function selectAvatarSetup(index) {
+            _setupSelectedAvatar = String(index + 1);
+            for (let i = 0; i < 9; i++) {
+                document.getElementById('avs-opt-' + i).classList.toggle('selected', i === index);
+            }
+            const previewImg = document.getElementById('avs-preview-img');
+            if (previewImg) previewImg.src = av(`gambar/avatar/avatar${_setupSelectedAvatar}.png`);
+        }
+
+        function saveAvatarSetup() {
+            _selectedAvatar = _setupSelectedAvatar;
+            localStorage.setItem('selectedAvatar', _selectedAvatar);
+            if (currentUser) {
+                db.ref(`userAvatars/${currentUser.uid}`).set(_selectedAvatar).catch(() => {});
+            }
+            document.getElementById('avatar-setup-screen').style.display = 'none';
+            onAuthAndNicknameReady(currentUser, currentNickname);
+        }
+
         function switchAuthTab(tab) {
             document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
             document.getElementById('register-form').style.display = tab === 'register' ? 'block' : 'none';
@@ -3429,7 +3702,7 @@
                 currentNickname = nick;
                 lsSet(LS.NICKNAME, nick);
                 hideNicknameScreen();
-                onAuthAndNicknameReady(currentUser, nick);
+                showAvatarSetupScreen();
             } catch(e) {
                 showNicknameError('❌ Gagal menyimpan nickname: ' + e.message);
             }
@@ -3566,7 +3839,7 @@
         function updateProfileAvatar() {
             const el = document.getElementById('profile-avatar');
             if (_selectedAvatar) {
-                el.innerHTML = `<img src="gambar/avatar/avatar${_selectedAvatar}.png" alt="avatar">`;
+                el.innerHTML = `<img src="${av(`gambar/avatar/avatar${_selectedAvatar}.png`)}" alt="avatar">`;
             } else {
                 const nickname = document.getElementById('profile-nickname-display').textContent || '?';
                 el.textContent = nickname.charAt(0).toUpperCase();
@@ -3618,7 +3891,7 @@
             const frameStyle = _getRankFrameStyle(_cachedRankName);
             const base = `width:${size}px;height:${size}px;border-radius:${Math.round(size*0.18)}px;overflow:hidden;${frameStyle}display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;background:linear-gradient(135deg,#f093fb,#f5576c);font-size:${Math.round(size*0.4)}px;font-weight:bold;color:white;`;
             if (_selectedAvatar) {
-                return `<div style="${base}"><img src="gambar/avatar/avatar${_selectedAvatar}.png" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'"></div>`;
+                return `<div style="${base}"><img src="${av(`gambar/avatar/avatar${_selectedAvatar}.png`)}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'"></div>`;
             }
             return `<div style="${base}">${fl}</div>`;
         }
@@ -4023,6 +4296,7 @@
             }
 
             reconnectAttempts++;
+            stopPingMeasurement();
 
             if (ws) {
                 // Hapus handler dulu agar onclose lama tidak trigger reconnect lagi
@@ -4829,14 +5103,14 @@
         // SOUND EFFECTS
         // =============================================
         const soundEffects = {
-            zoomIn:    new Audio('sounds/zoom_in.mp3'),
-            zoomOut:   new Audio('sounds/zoom_out.mp3'),
-            forcePick: new Audio('sounds/force_pick.mp3'),
-            drawCard:  new Audio('sounds/draw_card.mp3'),
-            x:         new Audio('sounds/x.mp3'),
-            button:    new Audio('sounds/button.mp3'),
-            bgMusic:   new Audio('sounds/bg_music.mp3'),
-            bgMusic2:  new Audio('sounds/bg_music2.mp3')
+            zoomIn:    new Audio(av('sounds/zoom_in.mp3')),
+            zoomOut:   new Audio(av('sounds/zoom_out.mp3')),
+            forcePick: new Audio(av('sounds/force_pick.mp3')),
+            drawCard:  new Audio(av('sounds/draw_card.mp3')),
+            x:         new Audio(av('sounds/x.mp3')),
+            button:    new Audio(av('sounds/button.mp3')),
+            bgMusic:   new Audio(av('sounds/bg_music.mp3')),
+            bgMusic2:  new Audio(av('sounds/bg_music2.mp3'))
         };
 
         soundEffects.bgMusic.loop = true;
@@ -4896,6 +5170,8 @@
         let forcePickHeartbeat = null;
         let autoForcePickTimer = null;
         let refreshButtonTimer = null;
+        let _pingInterval = null;
+        let _pingTs = 0;
 
         let reconnectAttempts = 0;
         let reconnectTimer = null;
@@ -5066,7 +5342,7 @@
                         provinces.forEach(name => {
                             const chip = document.createElement('div');
                             chip.className = 'prov-chip' + (name === mandatory ? ' mandatory' : '');
-                            chip.innerHTML = `<img src="gambar/provinsi/${name}/peta (${name}).png" alt="${name}" class="prov-chip-icon" onerror="this.style.display='none'">${name}`;
+                            chip.innerHTML = `<img src="${av(`gambar/provinsi/${name}/peta (${name}).png`)}" alt="${name}" class="prov-chip-icon" onerror="this.style.display='none'">${name}`;
                             grid.appendChild(chip);
                         });
                     }
@@ -5233,6 +5509,7 @@
                             if (_deckDiv) _deckDiv.innerHTML = '';
                         }
                         updateGameUI(data.state);
+                        startPingMeasurement();
                         addLog(_isSpectator ? '📺 Kamu menonton pertandingan ini.' : '🎮 Game dimulai! Selamat bermain!');
                         // Pastikan bgMusic2 jalan untuk semua pemain (host, guest, party, custom room)
                         try {
@@ -5250,6 +5527,18 @@
                             });
                         } catch(e) {}
                     }, 500);
+                    break;
+
+                case 'SERVER_PONG': {
+                    const rtt = Date.now() - data.ts;
+                    if (ws && ws.readyState === 1 && currentRoomId) {
+                        try { ws.send(JSON.stringify({ type: 'REPORT_PING', ping: rtt, roomId: currentRoomId })); } catch(e) {}
+                    }
+                    break;
+                }
+
+                case 'PING_DATA':
+                    if (data.pings) updatePingPanel(data.pings);
                     break;
 
                 case 'GAME_STATE_UPDATE':
@@ -5674,7 +5963,7 @@
             const fallbackEmoji = emojiMap[card.type] || '🎴';
             let imageContent = '';
             if (card.province) {
-                const imgSrc = `gambar/provinsi/${card.province}/${card.name}.png`;
+                const imgSrc = av(`gambar/provinsi/${card.province}/${card.name}.png`);
                 imageContent = `<img src="${imgSrc}" alt="${card.name}" onerror="this.parentElement.innerHTML='${fallbackEmoji}';">`;
             } else {
                 imageContent = fallbackEmoji;
@@ -5715,7 +6004,7 @@
 
                 const fallbackEmoji = emojiMap[card.type] || '🎴';
                 let imageContent = '';
-                const imgSrc = `gambar/provinsi/${gameState.currentProvince}/${card.name}.png`;
+                const imgSrc = av(`gambar/provinsi/${gameState.currentProvince}/${card.name}.png`);
                 imageContent = `<img src="${imgSrc}" alt="${card.name}" onerror="this.parentElement.innerHTML='${fallbackEmoji}';">`;
 
                 cardDiv.innerHTML = `
@@ -5888,6 +6177,7 @@
         function endGame(finalRankings) {
             if (_endGameShown) return; // cegah pemanggilan ganda (misal dari WS stale)
             _endGameShown = true;
+            stopPingMeasurement();
             lsClear();
             currentRoomId = null; // Cegah beforeunload menyimpan ulang room yang sudah selesai
 
@@ -6092,6 +6382,46 @@
 
         let goToHomeInProgress = false;
         /** Kembali ke halaman home: tutup semua modal, putar bgMusic, reset ke pre-loading screen */
+        function _pingCategory(ms) {
+            if (ms === null || ms === undefined) return { cls: 'ping-unknown', label: '— ms' };
+            if (ms < 100)  return { cls: 'ping-kuat',   label: ms + ' ms' };
+            if (ms < 200)  return { cls: 'ping-sedang', label: ms + ' ms' };
+            return                 { cls: 'ping-lemah',  label: ms + ' ms' };
+        }
+
+        function updatePingPanel(pings) {
+            const list = document.getElementById('ping-list');
+            if (!list) return;
+            list.innerHTML = '';
+            pings.forEach(p => {
+                const { cls, label } = _pingCategory(p.ping);
+                const item = document.createElement('div');
+                item.className = 'ping-item';
+                const isSelf = p.id === myPlayerId;
+                item.innerHTML = `
+                    <span class="ping-name">${isSelf ? '👤' : '🧑'} ${p.name}${isSelf ? ' (Kamu)' : ''}</span>
+                    <span class="ping-badge ${cls}">${label}</span>`;
+                list.appendChild(item);
+            });
+        }
+
+        function startPingMeasurement() {
+            stopPingMeasurement();
+            const sendPing = () => {
+                if (!ws || ws.readyState !== 1) return;
+                _pingTs = Date.now();
+                try { ws.send(JSON.stringify({ type: 'CLIENT_PING', ts: _pingTs })); } catch(e) {}
+            };
+            sendPing();
+            _pingInterval = setInterval(sendPing, 3000);
+        }
+
+        function stopPingMeasurement() {
+            if (_pingInterval) { clearInterval(_pingInterval); _pingInterval = null; }
+            const list = document.getElementById('ping-list');
+            if (list) list.innerHTML = '';
+        }
+
         function goToHome() {
             if (goToHomeInProgress) return; // guard double-click
             goToHomeInProgress = true;
@@ -6107,6 +6437,9 @@
                     _pendingWinSave = true; // server sedang simpan (checkWin) → beri waktu lebih
                 }
             }
+
+            // Stop ping measurement
+            stopPingMeasurement();
 
             // Reset flag untuk pertandingan berikutnya
             hasGameOverSaved = false;
@@ -6362,7 +6695,10 @@
             const player = gameState.players.find(p => p.id === myPlayerId);
             if (!player) return;
 
-            document.getElementById('player-header-name').textContent = `👤 ${player.name}`;
+            const rankBadge = player.winner
+                ? ` <span style="font-size:0.6em; background:rgba(255,210,0,0.2); border:1px solid rgba(255,210,0,0.6); border-radius:12px; padding:2px 10px; color:#ffd200; vertical-align:middle; white-space:nowrap;">🏆#${player.rank}</span>`
+                : '';
+            document.getElementById('player-header-name').innerHTML = `👤 ${player.name}${rankBadge}`;
             document.getElementById('player-cards').textContent = player.hand.length;
             document.getElementById('player-power').textContent = player.totalPower || 0;
 
@@ -6415,15 +6751,22 @@
                 const isPhase2Turn = gameState.phase === 2 && !player.hasPlayed && !player.mustDraw && !player.mustForcePick && !player.isProcessingAction;
                 const matchesProvince = card.province === gameState.currentProvince;
 
-                existing.classList.remove('selectable', 'disabled', 'locked');
-                existing.onclick = null;
+                const shouldBeSelectable = (isPhase1Turn) || (isPhase2Turn && matchesProvince);
+                const alreadySelectable = existing.classList.contains('selectable');
+
+                if (!shouldBeSelectable) {
+                    existing.classList.remove('selectable', 'disabled', 'locked');
+                    existing.onclick = null;
+                }
 
                 if (isPhase1Turn) {
-                    existing.classList.add('selectable');
+                    if (!alreadySelectable) existing.classList.add('selectable');
+                    existing.classList.remove('disabled', 'locked');
                     existing.style.cursor = 'pointer';
                     existing.onclick = (e) => { e.stopPropagation(); playerPlayPhase1(card); };
                 } else if (isPhase2Turn && matchesProvince) {
-                    existing.classList.add('selectable');
+                    if (!alreadySelectable) existing.classList.add('selectable');
+                    existing.classList.remove('disabled', 'locked');
                     existing.style.cursor = 'pointer';
                     existing.onclick = (e) => { e.stopPropagation(); playerPlayCard(card); };
                 } else if (isPhase2Turn && !matchesProvince) {
@@ -6751,8 +7094,8 @@
         // SETTINGS SCREEN
         // =============================================
         // Rasio volume SFX default (relatif antar suara)
-        const SFX_KEYS = ['zoomIn', 'zoomOut', 'forcePick', 'drawCard', 'x'];
-        const SFX_BASE = { zoomIn: 0.5, zoomOut: 0.5, forcePick: 0.6, drawCard: 0.5, x: 0.5 };
+        const SFX_KEYS = ['zoomIn', 'zoomOut', 'forcePick', 'drawCard', 'x', 'button'];
+        const SFX_BASE = { zoomIn: 0.5, zoomOut: 0.5, forcePick: 0.6, drawCard: 0.5, x: 0.5, button: 0.5 };
         // Slider master SFX (0-100) → skala ke volume masing-masing dengan rasio base
         const SFX_MAX = Math.max(...Object.values(SFX_BASE)); // 0.6
 
@@ -6895,6 +7238,16 @@
 
         function hideSettingsScreen() {
             document.getElementById('settings-screen').style.display = 'none';
+            document.body.style.overflow = '';
+        }
+
+        function showPengembangScreen() {
+            document.getElementById('pengembang-screen').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function hidePengembangScreen() {
+            document.getElementById('pengembang-screen').style.display = 'none';
             document.body.style.overflow = '';
         }
 
@@ -7345,7 +7698,7 @@
                 db.ref(`userAvatars/${uid}`).get().then(avSnap => {
                     const avNum = avSnap.exists() ? String(avSnap.val()) : '7';
                     const avEl = document.getElementById('vp-avatar');
-                    avEl.innerHTML = `<img src="gambar/avatar/avatar${avNum}.png" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.textContent='${nick.charAt(0).toUpperCase()}'">`;
+                    avEl.innerHTML = `<img src="${av(`gambar/avatar/avatar${avNum}.png`)}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.textContent='${nick.charAt(0).toUpperCase()}'">`;
                 });
                 document.getElementById('vp-uid').textContent    = '#' + shortId;
                 document.getElementById('vp-joined').textContent = 'Bergabung: ' + joined;
@@ -7641,7 +7994,7 @@
                     const avNum   = avatarMap[e.uid] || '7';
                     return `<div class="lb-item ${topCls} ${selfCls}" onclick="playSound('button');visitPlayerProfile('${e.uid}')">
                         ${posDisp}
-                        <img src="gambar/avatar/avatar${avNum}.png" class="lb-avatar" onerror="this.src='gambar/avatar/avatar7.png'">
+                        <img src="${av(`gambar/avatar/avatar${avNum}.png`)}" class="lb-avatar" onerror="this.src='gambar/avatar/avatar7.png?v='+ASSET_V">
                         <img src="${rankImgSrc(e.rankName)}" class="lb-rank-img" onerror="this.style.display='none'">
                         <div class="lb-info">
                             <div class="lb-name">${escHtml(e.nick)}${selfTag}</div>
@@ -7961,7 +8314,7 @@
                         const fStyle = _getRankFrameStyle(rkName);
                         const init = acceptedName.charAt(0).toUpperCase();
                         const iconEl = document.getElementById(`pslot-${slotNum}-icon`);
-                        if (iconEl) iconEl.innerHTML = `<div style="width:54px;height:54px;border-radius:10px;overflow:hidden;${fStyle}display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f093fb,#f5576c);font-size:1.4em;font-weight:bold;color:white;"><img src="gambar/avatar/avatar${avNum}.png" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.textContent='${init}'"></div>`;
+                        if (iconEl) iconEl.innerHTML = `<div style="width:54px;height:54px;border-radius:10px;overflow:hidden;${fStyle}display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f093fb,#f5576c);font-size:1.4em;font-weight:bold;color:white;"><img src="${av(`gambar/avatar/avatar${avNum}.png`)}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.textContent='${init}'"></div>`;
                     }).catch(() => {
                         const iconEl = document.getElementById(`pslot-${slotNum}-icon`);
                         if (iconEl) iconEl.textContent = '✅';
@@ -8197,7 +8550,7 @@
                 const fStyle = _getRankFrameStyle(rkName);
                 const init   = hostName.charAt(0).toUpperCase();
                 const el = document.getElementById('pslot-1-icon');
-                if (el) el.innerHTML = `<div style="width:54px;height:54px;border-radius:10px;overflow:hidden;${fStyle}display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f093fb,#f5576c);font-size:1.4em;font-weight:bold;color:white;"><img src="gambar/avatar/avatar${avNum}.png" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.textContent='${init}'"></div>`;
+                if (el) el.innerHTML = `<div style="width:54px;height:54px;border-radius:10px;overflow:hidden;${fStyle}display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f093fb,#f5576c);font-size:1.4em;font-weight:bold;color:white;"><img src="${av(`gambar/avatar/avatar${avNum}.png`)}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.textContent='${init}'"></div>`;
             }).catch(() => {});
             // Slot milik saya: tampilkan diri sendiri
             const mySlotEl = document.getElementById(`pslot-${mySlotNum}`);
@@ -8252,7 +8605,7 @@
                             const fStyle = _getRankFrameStyle(rkName);
                             const init   = theirName.charAt(0).toUpperCase();
                             const el = document.getElementById(`pslot-${otherSlotNum}-icon`);
-                            if (el) el.innerHTML = `<div style="width:54px;height:54px;border-radius:10px;overflow:hidden;${fStyle}display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f093fb,#f5576c);font-size:1.4em;font-weight:bold;color:white;"><img src="gambar/avatar/avatar${avNum}.png" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.textContent='${init}'"></div>`;
+                            if (el) el.innerHTML = `<div style="width:54px;height:54px;border-radius:10px;overflow:hidden;${fStyle}display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f093fb,#f5576c);font-size:1.4em;font-weight:bold;color:white;"><img src="${av(`gambar/avatar/avatar${avNum}.png`)}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.textContent='${init}'"></div>`;
                         }).catch(() => {});
                     });
                 });
@@ -8485,7 +8838,7 @@
                             const rkName = rkSnap.exists() ? (rkSnap.val().rankName || 'Bronze III') : 'Bronze III';
                             const fStyle = _getRankFrameStyle(rkName);
                             const el = document.getElementById(cIconId);
-                            if (el) el.outerHTML = `<div style="width:36px;height:36px;border-radius:6px;overflow:hidden;${fStyle}display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f093fb,#f5576c);font-size:1em;font-weight:bold;color:white;flex-shrink:0;"><img src="gambar/avatar/avatar${avNum}.png" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.textContent='${cInit}'"></div>`;
+                            if (el) el.outerHTML = `<div style="width:36px;height:36px;border-radius:6px;overflow:hidden;${fStyle}display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f093fb,#f5576c);font-size:1em;font-weight:bold;color:white;flex-shrink:0;"><img src="${av(`gambar/avatar/avatar${avNum}.png`)}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.textContent='${cInit}'"></div>`;
                         }).catch(() => {}))(entry.uid);
                     }
                 } else {
@@ -8991,7 +9344,7 @@
 
                 const header = document.createElement('div');
                 header.className = 'enc-province-name';
-                const imgSrc = `gambar/provinsi/${prov.name}/peta (${prov.name}).png`;
+                const imgSrc = av(`gambar/provinsi/${prov.name}/peta (${prov.name}).png`);
                 header.innerHTML = `<img src="${imgSrc}" alt="Peta ${prov.name}" class="enc-province-img" onerror="this.style.display='none'">${prov.name} <span style="font-size:0.72em;opacity:0.55;font-weight:normal;margin-left:4px;">(${prov.cards.length} kartu)</span>`;
                 section.appendChild(header);
 
@@ -9165,15 +9518,15 @@
         <div id="avatar-picker-box">
             <h3>🖼️ Pilih Foto Profil</h3>
             <div class="avatar-grid">
-                <div class="avatar-option" id="av-opt-0" onclick="selectAvatar(0)"><img src="gambar/avatar/avatar1.png" alt="Avatar 1" onerror="this.parentElement.textContent='👤'"></div>
-                <div class="avatar-option" id="av-opt-1" onclick="selectAvatar(1)"><img src="gambar/avatar/avatar2.png" alt="Avatar 2" onerror="this.parentElement.textContent='👤'"></div>
-                <div class="avatar-option" id="av-opt-2" onclick="selectAvatar(2)"><img src="gambar/avatar/avatar3.png" alt="Avatar 3" onerror="this.parentElement.textContent='👤'"></div>
-                <div class="avatar-option" id="av-opt-3" onclick="selectAvatar(3)"><img src="gambar/avatar/avatar4.png" alt="Avatar 4" onerror="this.parentElement.textContent='👤'"></div>
-                <div class="avatar-option" id="av-opt-4" onclick="selectAvatar(4)"><img src="gambar/avatar/avatar5.png" alt="Avatar 5" onerror="this.parentElement.textContent='👤'"></div>
-                <div class="avatar-option" id="av-opt-5" onclick="selectAvatar(5)"><img src="gambar/avatar/avatar6.png" alt="Avatar 6" onerror="this.parentElement.textContent='👤'"></div>
-                <div class="avatar-option" id="av-opt-6" onclick="selectAvatar(6)"><img src="gambar/avatar/avatar7.png" alt="Avatar 7" onerror="this.parentElement.textContent='👤'"></div>
-                <div class="avatar-option" id="av-opt-7" onclick="selectAvatar(7)"><img src="gambar/avatar/avatar8.png" alt="Avatar 8" onerror="this.parentElement.textContent='👤'"></div>
-                <div class="avatar-option" id="av-opt-8" onclick="selectAvatar(8)"><img src="gambar/avatar/avatar9.png" alt="Avatar 9" onerror="this.parentElement.textContent='👤'"></div>
+                <div class="avatar-option" id="av-opt-0" onclick="selectAvatar(0)"><img src="gambar/avatar/avatar1.png?v=1.0" alt="Avatar 1" onerror="this.parentElement.textContent='👤'"></div>
+                <div class="avatar-option" id="av-opt-1" onclick="selectAvatar(1)"><img src="gambar/avatar/avatar2.png?v=1.0" alt="Avatar 2" onerror="this.parentElement.textContent='👤'"></div>
+                <div class="avatar-option" id="av-opt-2" onclick="selectAvatar(2)"><img src="gambar/avatar/avatar3.png?v=1.0" alt="Avatar 3" onerror="this.parentElement.textContent='👤'"></div>
+                <div class="avatar-option" id="av-opt-3" onclick="selectAvatar(3)"><img src="gambar/avatar/avatar4.png?v=1.0" alt="Avatar 4" onerror="this.parentElement.textContent='👤'"></div>
+                <div class="avatar-option" id="av-opt-4" onclick="selectAvatar(4)"><img src="gambar/avatar/avatar5.png?v=1.0" alt="Avatar 5" onerror="this.parentElement.textContent='👤'"></div>
+                <div class="avatar-option" id="av-opt-5" onclick="selectAvatar(5)"><img src="gambar/avatar/avatar6.png?v=1.0" alt="Avatar 6" onerror="this.parentElement.textContent='👤'"></div>
+                <div class="avatar-option" id="av-opt-6" onclick="selectAvatar(6)"><img src="gambar/avatar/avatar7.png?v=1.0" alt="Avatar 7" onerror="this.parentElement.textContent='👤'"></div>
+                <div class="avatar-option" id="av-opt-7" onclick="selectAvatar(7)"><img src="gambar/avatar/avatar8.png?v=1.0" alt="Avatar 8" onerror="this.parentElement.textContent='👤'"></div>
+                <div class="avatar-option" id="av-opt-8" onclick="selectAvatar(8)"><img src="gambar/avatar/avatar9.png?v=1.0" alt="Avatar 9" onerror="this.parentElement.textContent='👤'"></div>
             </div>
             <button id="btn-avatar-close" onclick="hideAvatarPicker()">✕ Tutup</button>
         </div>
