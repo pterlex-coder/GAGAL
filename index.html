@@ -3532,7 +3532,10 @@
             }, 800);
         })();
 
+        let _lastAuthUid = null;
         auth.onAuthStateChanged(async (user) => {
+            if (user && user.uid === _lastAuthUid) return;
+            _lastAuthUid = user ? user.uid : null;
             // Tunggu preloading selesai, baru sembunyikan firebase-loading
             function hideFirebaseLoading(cb) {
                 function tryHide() {
@@ -3744,6 +3747,7 @@
             
             showNicknameError('');
             try {
+                await currentUser.getIdToken(true); // force-refresh token untuk akun baru
                 await db.ref(`users/${currentUser.uid}`).update({
                     nickname: nick,
                     email: currentUser.email,
