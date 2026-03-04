@@ -3555,6 +3555,7 @@
                 lsSet(LS.USER_EMAIL, user.email);
                 
                 // Cek apakah sudah punya nickname di DB
+                try {
                 const snap = await db.ref(`users/${user.uid}/nickname`).get();
                 if (snap.exists()) {
                     currentNickname = snap.val();
@@ -3564,6 +3565,16 @@
                     // Belum punya nickname, tampilkan nickname screen
                     hideAuthScreen();
                     showNicknameScreen();
+                }
+                } catch(e) {
+                    // Firebase DB gagal — fallback ke nickname lokal
+                    currentNickname = lsGet(LS.NICKNAME) || null;
+                    if (currentNickname) {
+                        onAuthAndNicknameReady(user, currentNickname);
+                    } else {
+                        hideAuthScreen();
+                        showNicknameScreen();
+                    }
                 }
             } else {
                 currentUser = null;
@@ -4331,7 +4342,9 @@
                 addLog('❌ Gagal reconnect setelah 3 percobaan. Kembali ke menu.');
                 lsDel(LS.ROOM_ID); lsDel(LS.PLAYER_ID); lsDel(LS.IS_SPECTATOR); lsDel(LS.GAME_ACTIVE);
                 reconnectAttempts = 0;
-                showPreloadingScreen();
+                showPreloadingScreen(false);
+                showHomeButtons();
+                document.getElementById('profile-badge').style.display = 'block';
                 return;
             }
 
