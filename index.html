@@ -7128,8 +7128,8 @@
         // =============================================
         // PROVINCE TOOLTIP FEATURE
         // =============================================
-        let _showProvinceTooltip    = lsGet(LS.PROVINCE_TOOLTIP)    !== '0'; // default: aktif
-        let _showDeckProvinceLabel  = lsGet(LS.DECK_PROVINCE_LABEL) === '1'; // default: off
+        let _showProvinceTooltip    = lsGet(LS.PROVINCE_TOOLTIP)    === '1'; // default: off
+        let _showDeckProvinceLabel  = lsGet(LS.DECK_PROVINCE_LABEL) !== '0'; // default: on
 
         function applyDeckProvinceLabelSetting(enabled) {
             _showDeckProvinceLabel = enabled;
