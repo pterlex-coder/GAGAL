@@ -7758,7 +7758,7 @@
                 db.ref(`userAvatars/${uid}`).get().then(avSnap => {
                     const avNum = avSnap.exists() ? String(avSnap.val()) : '7';
                     const avEl = document.getElementById('vp-avatar');
-                    avEl.innerHTML = `<img src="${av(`gambar/avatar/avatar${avNum}.png`)}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.textContent='${nick.charAt(0).toUpperCase()}'">`;
+                    avEl.innerHTML = `<img src="${av(`gambar/avatar/avatar${avNum}.png`)}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.textContent='${escHtml(nick.charAt(0).toUpperCase())}'">`;
                 });
                 document.getElementById('vp-uid').textContent    = '#' + shortId;
                 document.getElementById('vp-joined').textContent = 'Bergabung: ' + joined;
@@ -8200,6 +8200,12 @@
         // ─────────────────────────────────────────────────────────────────────
 
         function showPartyLobby() {
+            // Blokir jika custom room lobby sedang aktif (normal atau minimized)
+            if (_customRoomId) {
+                showToast('⚠️ Kamu sedang di lobi kostum. Keluar dulu sebelum buka ranked.', 'warning');
+                restoreCustomRoom();
+                return;
+            }
             _resetPartyLobbyOverlay();
             // Reset state
             _partyFriendUid = null; _partyFriendName = null;
@@ -8436,7 +8442,7 @@
                         const avNum = avSnap.exists() ? String(avSnap.val()) : '7';
                         const rkName = rkSnap.exists() ? (rkSnap.val().rankName || 'Bronze III') : 'Bronze III';
                         const fStyle = _getRankFrameStyle(rkName);
-                        const init = acceptedName.charAt(0).toUpperCase();
+                        const init = escHtml(acceptedName.charAt(0).toUpperCase());
                         const iconEl = document.getElementById(`pslot-${slotNum}-icon`);
                         if (iconEl) iconEl.innerHTML = `<div style="width:54px;height:54px;border-radius:10px;overflow:hidden;${fStyle}display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f093fb,#f5576c);font-size:1.4em;font-weight:bold;color:white;"><img src="${av(`gambar/avatar/avatar${avNum}.png`)}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.textContent='${init}'"></div>`;
                     }).catch(() => {
@@ -8673,7 +8679,7 @@
                 const avNum  = avSnap.exists() ? String(avSnap.val()) : '7';
                 const rkName = rkSnap.exists() ? (rkSnap.val().rankName || 'Bronze III') : 'Bronze III';
                 const fStyle = _getRankFrameStyle(rkName);
-                const init   = hostName.charAt(0).toUpperCase();
+                const init   = escHtml(hostName.charAt(0).toUpperCase());
                 const el = document.getElementById('pslot-1-icon');
                 if (el) el.innerHTML = `<div style="width:54px;height:54px;border-radius:10px;overflow:hidden;${fStyle}display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f093fb,#f5576c);font-size:1.4em;font-weight:bold;color:white;"><img src="${av(`gambar/avatar/avatar${avNum}.png`)}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.textContent='${init}'"></div>`;
             }).catch(() => {});
@@ -8728,7 +8734,7 @@
                             const avNum  = avSnap.exists() ? String(avSnap.val()) : '7';
                             const rkName = rkSnap.exists() ? (rkSnap.val().rankName || 'Bronze III') : 'Bronze III';
                             const fStyle = _getRankFrameStyle(rkName);
-                            const init   = theirName.charAt(0).toUpperCase();
+                            const init   = escHtml(theirName.charAt(0).toUpperCase());
                             const el = document.getElementById(`pslot-${otherSlotNum}-icon`);
                             if (el) el.innerHTML = `<div style="width:54px;height:54px;border-radius:10px;overflow:hidden;${fStyle}display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f093fb,#f5576c);font-size:1.4em;font-weight:bold;color:white;"><img src="${av(`gambar/avatar/avatar${avNum}.png`)}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.textContent='${init}'"></div>`;
                         }).catch(() => {});
@@ -8836,6 +8842,12 @@
 
         function showKostumPicker() {
             if (!currentUser) { showToast('❌ Login dulu untuk fitur ini.', 'error'); return; }
+            // Blokir jika ranked party lobby sedang aktif (normal atau minimized)
+            if (document.getElementById('party-lobby-overlay').style.display === 'flex') {
+                showToast('⚠️ Kamu sedang di lobi ranked. Tutup dulu sebelum buka kostum.', 'warning');
+                restorePartyLobby();
+                return;
+            }
             document.getElementById('kostum-picker-overlay').style.display = 'flex';
         }
         function closeKostumPicker() {
@@ -8898,6 +8910,28 @@
                         reconnectAttempts = 0;
                         if (reconnectTimer) clearTimeout(reconnectTimer);
                         reconnectTimer = setTimeout(() => reconnectToGame(currentRoomId, myPlayerId), 2000);
+                    } else if (_customRoomId) {
+                        // WS putus saat pending custom room (belum mulai game) —
+                        // server sudah cleanup room via onclose, bersihkan state client
+                        // agar tidak orphaned dan memblokir showPartyLobby()
+                        _customRoomSlots.forEach(s => {
+                            if (s?.pending && s.uid) db.ref(`users/${s.uid}/customRoomInvite`).remove().catch(() => {});
+                        });
+                        if (_customInviteRef) { _customInviteRef.off(); _customInviteRef = null; }
+                        _customInviteData = null;
+                        _customRoomId = null;
+                        _customRoomRole = null;
+                        _customRoomSlots = [];
+                        _customPickerSlot = null;
+                        _pendingCustomJoin = false;
+                        _isCustomRoomCreator = false;
+                        _resetCustomRoomOverlay();
+                        document.getElementById('custom-room-overlay').style.display = 'none';
+                        _stopCustomPresenceListener();
+                        document.getElementById('custom-friend-picker').style.display = 'none';
+                        _setPresenceStatus('online');
+                        _startCustomRoomInviteListener();
+                        showToast('⚠️ Koneksi terputus. Lobi kostum ditutup otomatis.', 'warning');
                     }
                 };
                 setTimeout(resolve, 5000); // fallback timeout
@@ -8949,7 +8983,7 @@
                     // Slot teman (terisi atau pending)
                     slot.classList.add('filled');
                     const cIconId = `cslot-icon-${slotPos}`;
-                    const cInit   = entry.name.charAt(0).toUpperCase();
+                    const cInit   = escHtml(entry.name.charAt(0).toUpperCase());
                     slot.innerHTML = `
                         <div id="${cIconId}" style="width:36px;height:36px;border-radius:6px;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f093fb,#f5576c);font-size:1em;font-weight:bold;color:white;flex-shrink:0;">${cInit}</div>
                         <div class="custom-slot-name">${escHtml(entry.name)}</div>
@@ -9293,6 +9327,12 @@
             // Tolak jika sedang aktif di game, party lobby, atau custom room lain
             if (currentRoomId) {
                 showToast('⚠️ Kamu sedang dalam pertandingan. Selesaikan dulu.', 'warning');
+                return;
+            }
+            // Blokir jika sedang di ranked party lobby (host atau tamu, normal atau minimized)
+            if (document.getElementById('party-lobby-overlay').style.display === 'flex') {
+                showToast('⚠️ Kamu sedang di lobi ranked. Tutup dulu sebelum menerima undangan kostum.', 'warning');
+                restorePartyLobby();
                 return;
             }
             if (_customRoomId) {
