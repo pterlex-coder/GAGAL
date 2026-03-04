@@ -3744,10 +3744,9 @@
             
             showNicknameError('');
             try {
-                await db.ref(`users/${currentUser.uid}`).set({
+                await db.ref(`users/${currentUser.uid}`).update({
                     nickname: nick,
                     email: currentUser.email,
-                    createdAt: Date.now()
                 });
                 currentNickname = nick;
                 lsSet(LS.NICKNAME, nick);
@@ -5396,7 +5395,13 @@
                         provinces.forEach(name => {
                             const chip = document.createElement('div');
                             chip.className = 'prov-chip' + (name === mandatory ? ' mandatory' : '');
-                            chip.innerHTML = `<img src="${av(`gambar/provinsi/${name}/peta (${name}).png`)}" alt="${name}" class="prov-chip-icon" onerror="this.style.display='none'">${name}`;
+                            const img = document.createElement('img');
+                            img.src = av(`gambar/provinsi/${name}/peta (${name}).png`);
+                            img.alt = name;
+                            img.className = 'prov-chip-icon';
+                            img.onerror = function() { this.style.display = 'none'; };
+                            chip.appendChild(img);
+                            chip.appendChild(document.createTextNode(name));
                             grid.appendChild(chip);
                         });
                     }
@@ -5418,10 +5423,11 @@
                     let secs = Math.ceil((data.remainingMs != null ? data.remainingMs : 6000) / 1000);
                     const numEl = document.getElementById('prov-countdown-num');
                     if (numEl) numEl.textContent = String(secs);
-                    const cdInterval = setInterval(() => {
+                    if (_cdInterval) { clearInterval(_cdInterval); _cdInterval = null; }
+                    _cdInterval = setInterval(() => {
                         secs--;
                         if (numEl) numEl.textContent = String(Math.max(0, secs));
-                        if (secs <= 0) clearInterval(cdInterval);
+                        if (secs <= 0) { clearInterval(_cdInterval); _cdInterval = null; }
                     }, 1000);
                     break;
                 }
@@ -6231,6 +6237,8 @@
         let _endGameShown = false;
         // Snapshot rankData sebelum game dimulai — dipakai endGame() agar tidak baca nilai yang sudah di-update server
         let _rankSnapshot = null;
+        // Interval countdown provinsi — disimpan agar bisa di-clear jika PROVINCES_SELECTED diterima ulang
+        let _cdInterval = null;
 
         function endGame(finalRankings) {
             if (_endGameShown) return; // cegah pemanggilan ganda (misal dari WS stale)
