@@ -3785,7 +3785,8 @@
             showProfileBadge(user.uid, nickname);
             _startPartyInviteListener();        // dengarkan undangan party dari teman
             _startFriendRequestBadge();         // update badge notifikasi di tombol Teman
-            _startCustomRoomInviteListener();   // dengarkan undangan custom room
+            // [FIX] _startCustomRoomInviteListener dipindah ke goToMatchmaking()
+            //       agar popup invite hanya muncul setelah user tekan PLAY
 
             // Cek & tandai presence (deteksi login di device lain)
             setupPresence(user, nickname);
@@ -5294,6 +5295,8 @@
                 preScreen.style.display = 'none';
                 document.getElementById('matchmaking-screen').classList.add('active');
                 document.getElementById('profile-badge').style.display = 'block';
+                // [FIX] Mulai dengarkan undangan custom room setelah user tekan PLAY
+                _startCustomRoomInviteListener();
             }, 500);
         }
 
@@ -5443,6 +5446,7 @@
                         _customRoomSlots.forEach(s => {
                             if (s?.pending && s.uid) db.ref(`users/${s.uid}/customRoomInvite`).remove().catch(() => {});
                         });
+                        _stopDeclineListener(); // [FIX] Bersihkan listener penolakan
                         _customRoomId = null;
                         _customRoomRole = null;
                         _customRoomSlots = [];
@@ -5484,6 +5488,7 @@
                     // Show lobby
                     document.getElementById('custom-room-overlay').style.display = 'flex';
                     _renderCustomRoomLobby();
+                    _startDeclineListener(); // [FIX] Mulai dengarkan penolakan undangan
                     break;
 
                 case 'CUSTOM_ROOM_UPDATE':
@@ -5507,6 +5512,7 @@
                     _resetCustomRoomOverlay();
                     document.getElementById('custom-room-overlay').style.display = 'none';
                     _stopCustomPresenceListener();
+                    _stopDeclineListener(); // [FIX] Bersihkan listener penolakan
                     document.getElementById('custom-friend-picker').style.display = 'none';
                     // Sembunyikan match-starting (provinces preview) jika ditampilkan dari custom room
                     const _msEl = document.getElementById('match-starting');
@@ -8857,6 +8863,7 @@
         let _customRoomSlots      = [];     // filled slots [{name, uid}]
         let _customInviteData     = null;   // pending invite data
         let _customInviteRef      = null;   // Firebase listener ref
+        let _customDeclineRef     = null;   // [FIX] listener notif penolakan (sisi host)
         let _customPickerSlot     = null;   // which slot index is being filled
         let _pendingCustomJoin    = false;  // menunggu konfirmasi server setelah JOIN_CUSTOM_ROOM
         let _isCustomRoomCreator  = false;  // true = user yang membuat room (bisa tambah/hapus bot)
@@ -9176,11 +9183,14 @@
             // Send Firebase invite
             const myName = currentNickname || lsGet(LS.NICKNAME) || 'Player';
             const customInviteRef = db.ref(`users/${uid}/customRoomInvite`);
+            // [FIX] Generate inviteId agar bisa dicocokkan saat decline
+            const inviteId = `inv_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
             await customInviteRef.set({
                 roomId: _customRoomId,
                 fromUid: currentUser.uid,
                 fromName: myName,
                 role: 'pemain',
+                inviteId,
                 ts: Date.now()
             }).catch(() => {});
             // Auto-hapus jika host disconnect (crash/tutup tab)
@@ -9188,7 +9198,8 @@
             // Optimistically mark slot as pending — gunakan slotIdx berbasis posisi
             const isSpect = _customRoomRole === 'penonton';
             const slotIdx = isSpect ? (slotPos - 1) : (slotPos - 2);
-            _customRoomSlots[slotIdx] = { name: `${name} (menunggu...)`, uid, pending: true };
+            // [FIX] Simpan inviteId di slot agar bisa dicocokkan saat decline
+            _customRoomSlots[slotIdx] = { name: `${name} (menunggu...)`, uid, pending: true, inviteId };
             _renderCustomRoomLobby();
         }
 
@@ -9239,6 +9250,7 @@
             _customRoomSlots.forEach(s => {
                 if (s?.pending && s.uid) db.ref(`users/${s.uid}/customRoomInvite`).remove().catch(() => {});
             });
+            _stopDeclineListener(); // [FIX] Bersihkan listener penolakan
             // Bersihkan Firebase listener undangan masuk (jika sedang jadi penerima)
             if (_customInviteRef) { _customInviteRef.off(); _customInviteRef = null; }
             _customInviteData = null;
@@ -9316,6 +9328,31 @@
         }
 
         // Listen for incoming custom room invites (for friends)
+        // [FIX] Listener Firebase notif penolakan undangan (sisi host)
+        function _startDeclineListener() {
+            if (!currentUser || !_customRoomId) return;
+            if (_customDeclineRef) { _customDeclineRef.off(); _customDeclineRef = null; }
+            _customDeclineRef = db.ref(`users/${currentUser.uid}/customRoomDecline`);
+            _customDeclineRef.on('child_added', snap => {
+                const dec = snap.val();
+                if (!dec || !dec.inviteId) return;
+                snap.ref.remove().catch(() => {});
+                // Kosongkan slot pending yang cocok inviteId
+                const slotIdx = _customRoomSlots.findIndex(s => s && s.pending && s.inviteId === dec.inviteId);
+                if (slotIdx !== -1) {
+                    _customRoomSlots[slotIdx] = null;
+                    _renderCustomRoomLobby();
+                }
+                showToast(`❌ ${dec.fromName || 'Pemain'} menolak undanganmu.`, 'warning');
+            });
+        }
+
+        function _stopDeclineListener() {
+            if (_customDeclineRef) { _customDeclineRef.off(); _customDeclineRef = null; }
+            // Bersihkan sisa notif decline di Firebase
+            if (currentUser) db.ref(`users/${currentUser.uid}/customRoomDecline`).remove().catch(() => {});
+        }
+
         function _startCustomRoomInviteListener() {
             if (!currentUser) return;
             if (_customInviteRef) _customInviteRef.off();
@@ -9421,8 +9458,18 @@
         async function declineCustomRoomInvite() {
             if (!_customInviteData || !currentUser) return;
             document.getElementById('custom-room-invite-popup').style.display = 'none';
+            const inv = _customInviteData;
             _customInviteData = null;
+            // Hapus invite dari Firebase milik diri sendiri
             await db.ref(`users/${currentUser.uid}/customRoomInvite`).remove().catch(() => {});
+            // [FIX] Tulis notif penolakan ke Firebase host agar slot pending dihapus & host dapat toast
+            if (inv.fromUid && inv.inviteId) {
+                const myName = currentNickname || lsGet(LS.NICKNAME) || 'Player';
+                const declineRef = db.ref(`users/${inv.fromUid}/customRoomDecline/${inv.inviteId}`);
+                await declineRef.set({ inviteId: inv.inviteId, fromName: myName, ts: Date.now() }).catch(() => {});
+                // Auto-hapus notif decline setelah 10 detik
+                setTimeout(() => declineRef.remove().catch(() => {}), 10000);
+            }
         }
 
         // Nav bar scroll for menu buttons
