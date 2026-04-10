@@ -4506,7 +4506,8 @@
                 ws.send(JSON.stringify({
                     type: 'REJOIN_AS_SPECTATOR',
                     roomId,
-                    userUid: currentUser ? currentUser.uid : (lsGet(LS.USER_UID) || '')
+                    userUid: currentUser ? currentUser.uid : (lsGet(LS.USER_UID) || ''),
+                    playerName: currentUser ? (currentUser.displayName || lsGet(LS.PLAYER_NAME) || 'Spectator') : (lsGet(LS.PLAYER_NAME) || 'Spectator'),
                 }));
             };
 
@@ -6524,6 +6525,7 @@
             // Stop ping measurement
             stopPingMeasurement();
 
+            const _wasSpectator = _isSpectator; // simpan sebelum di-reset
             // Reset flag untuk pertandingan berikutnya
             hasGameOverSaved = false;
             pendingClientSaveRank = null; // reset untuk pertandingan berikutnya
@@ -6607,7 +6609,7 @@
             if (_ws) { _ws.onmessage = null; _ws.onclose = null; _ws.onerror = null; }
             _endGameShown = false; // reset untuk pertandingan berikutnya
             if (_ws && _ws.readyState === WebSocket.OPEN && _roomId) {
-                try { _ws.send(JSON.stringify({ type: 'LEAVE_MATCH', roomId: _roomId })); } catch(e) {}
+                try { _ws.send(JSON.stringify({ type: 'LEAVE_MATCH', roomId: _roomId, isSpectator: _wasSpectator })); } catch(e) {}
                 const _closeDelay = _pendingWinSave ? 5000 : 200;
                 setTimeout(() => { try { _ws.close(); } catch(e) {} }, _closeDelay);
             } else if (_ws) {
