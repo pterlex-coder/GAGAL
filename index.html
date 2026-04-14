@@ -4449,6 +4449,21 @@
                     showPreloadingScreen(false);
                     showHomeButtons();
                     document.getElementById('profile-badge').style.display = 'block';
+                } else if (data.type === 'GAME_OVER') {
+                    // Late rejoin — room sudah selesai saat pemain tidak aktif.
+                    // Tampilkan hasil lalu reset state agar bubble lobby berfungsi normal.
+                    reconnected.value = true;
+                    reconnectAttempts = MAX_RECONNECT_ATTEMPTS;
+                    lsDel(LS.ROOM_ID); lsDel(LS.PLAYER_ID); lsDel(LS.IS_SPECTATOR); lsDel(LS.GAME_ACTIVE);
+                    currentRoomId = null;
+                    myPlayerId = null;
+                    // Sembunyikan pre-loading screen sebelum endGame agar tidak menutupi modal
+                    const _lrPreScreen = document.getElementById('pre-loading-screen');
+                    if (_lrPreScreen) { _lrPreScreen.style.display = 'none'; _lrPreScreen.classList.remove('hidden'); }
+                    document.getElementById('profile-badge').style.display = 'block';
+                    if (data.players) endGame(data.players);
+                    // Reset _endGameShown setelah modal tampil agar sesi berikutnya tidak terblokir
+                    setTimeout(() => { _endGameShown = false; }, 200);
                 } else {
                     // Pesan lain (misal LOG) tiba sebelum GAME_STATE_UPDATE.
                     // Jangan set currentRoomId dulu — tunggu konfirmasi GAME_STATE_UPDATE
@@ -5282,6 +5297,8 @@
         }
 
         function goToMatchmaking() {
+            // Reset endGame guard agar sesi baru tidak terblokir oleh state pertandingan lama
+            _endGameShown = false;
             // Try to start bg music on user gesture
             try {
                 soundEffects.bgMusic.currentTime = 0;
