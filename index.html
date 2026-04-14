@@ -833,6 +833,8 @@
 
         @keyframes slideInRight { from{transform:translateX(400px);opacity:0;} to{transform:translateX(0);opacity:1;} }
         @keyframes slideOutRight { from{transform:translateX(0);opacity:1;} to{transform:translateX(400px);opacity:0;} }
+        @keyframes scaleIn { from{transform:scale(0.82);opacity:0;} to{transform:scale(1);opacity:1;} }
+        @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
         @keyframes spin { 0%{transform:rotate(0deg);} 100%{transform:rotate(360deg);} }
         @keyframes titlePulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.05);} }
 
@@ -3496,6 +3498,10 @@
             DECK_PROVINCE_LABEL: 'cgn_deck_province_label',
         };
 
+        // Info rejoin yang tertunda — diisi saat ada pertandingan aktif ditemukan,
+        // dibaca saat tombol PLAY ditekan. null = tidak ada rejoin tertunda.
+        let _pendingRejoin = null; // { roomId, playerId, isSpectator }
+
         function lsSet(key, value) { try { localStorage.setItem(key, value); } catch(e) {} }
         function lsGet(key) { try { return localStorage.getItem(key); } catch(e) { return null; } }
         function lsDel(key) { try { localStorage.removeItem(key); } catch(e) {} }
@@ -3790,6 +3796,21 @@
             // Cek & tandai presence (deteksi login di device lain)
             setupPresence(user, nickname);
             
+            // ── Listener real-time: deteksi password diganti dari device lain ──
+            // Jika passwordChangedAt berubah setelah loginTime sesi ini → paksa logout
+            const _loginTime = Date.now();
+            db.ref(`users/${user.uid}/passwordChangedAt`).on('value', (snap) => {
+                if (!snap.exists()) return;
+                const pwChangedAt = snap.val();
+                // Hanya berlaku jika perubahan terjadi SETELAH sesi ini dimulai
+                // (bukan password yang sudah diganti sebelum login ini)
+                if (pwChangedAt > _loginTime) {
+                    // Lepas listener agar tidak terpanggil lagi
+                    snap.ref.off();
+                    _showPasswordChangedModal();
+                }
+            });
+
             // Cek localStorage apakah ada sesi pertandingan aktif
             const savedRoomId    = lsGet(LS.ROOM_ID);
             const savedPlayerId  = lsGet(LS.PLAYER_ID);
@@ -3798,13 +3819,15 @@
             const savedUid       = lsGet(LS.USER_UID);
 
             if (savedRoomId && savedSpectator === 'true' && gameActive === 'true' && savedUid === user.uid) {
-                // Sesi spectator — reconnect sebagai penonton
+                // Sesi spectator ditemukan di localStorage → tunda, tunggu PLAY
+                _pendingRejoin = { roomId: savedRoomId, playerId: null, isSpectator: true };
                 showPreloadingScreen(false);
-                setTimeout(() => { reconnectAsSpectator(savedRoomId); }, 1500);
+                showPlayButtonWithRejoin('spectator');
             } else if (savedRoomId && savedPlayerId && gameActive === 'true' && savedUid === user.uid) {
-                // Sesi pemain biasa — reconnect normal
+                // Sesi pemain ditemukan di localStorage → tunda, tunggu PLAY
+                _pendingRejoin = { roomId: savedRoomId, playerId: savedPlayerId, isSpectator: false };
                 showPreloadingScreen(false);
-                setTimeout(() => { reconnectToGame(savedRoomId, savedPlayerId); }, 1500);
+                showPlayButtonWithRejoin('player');
             } else {
                 // Hapus sesi lama yang bukan milik user ini
                 lsDel(LS.ROOM_ID);
@@ -3830,6 +3853,30 @@
             if (playBtn) playBtn.style.display = 'block';
         }
 
+        /**
+         * Tampilkan tombol PLAY dengan label khusus saat ada pertandingan tertunda.
+         * Label berubah jadi "▶ LANJUTKAN" agar user tahu ada match yang bisa direjoin.
+         */
+        function showPlayButtonWithRejoin(role) {
+            const infoEl    = document.getElementById('pre-loading-info');
+            const spinnerEl = document.getElementById('pre-loading-spinner');
+            const subtitleEl= document.querySelector('.pre-loading-subtitle');
+            const playBtn   = document.getElementById('btn-play');
+            if (infoEl)    infoEl.style.display    = 'none';
+            if (spinnerEl) spinnerEl.style.display  = 'none';
+            if (subtitleEl) {
+                subtitleEl.style.display = 'block';
+                subtitleEl.style.color   = '#ffe082';
+                subtitleEl.textContent   = role === 'spectator'
+                    ? '👁️ Kamu sedang menonton pertandingan aktif'
+                    : '⚔️ Kamu memiliki pertandingan yang sedang berlangsung';
+            }
+            if (playBtn) {
+                playBtn.style.display = 'block';
+                playBtn.textContent   = '▶ LANJUTKAN';
+            }
+        }
+
         // Cari room aktif berdasarkan userUid — untuk login di device berbeda
         function findMyRoomOnServer(userUid) {
             let resolved = false;
@@ -3846,13 +3893,15 @@
                     if (isSpectator) {
                         lsSet(LS.IS_SPECTATOR, 'true');
                         lsDel(LS.PLAYER_ID);
-                        addLog('🔍 Pertandingan aktif ditemukan! Menyambung kembali sebagai penonton...');
-                        reconnectAsSpectator(roomId);
+                        // Pertandingan ditemukan → simpan info, tampilkan PLAY
+                        _pendingRejoin = { roomId, playerId: null, isSpectator: true };
+                        showPlayButtonWithRejoin('spectator');
                     } else {
                         lsSet(LS.PLAYER_ID, playerId);
                         lsDel(LS.IS_SPECTATOR);
-                        addLog('🔍 Pertandingan aktif ditemukan! Menyambung kembali...');
-                        reconnectToGame(roomId, playerId);
+                        // Pertandingan ditemukan → simpan info, tampilkan PLAY
+                        _pendingRejoin = { roomId, playerId, isSpectator: false };
+                        showPlayButtonWithRejoin('player');
                     }
                 } else {
                     showHomeButtons();
@@ -3976,40 +4025,63 @@
 
         /**
          * Tulis status online ke Firebase Realtime DB.
-         * Jika akun sudah online di device lain → tampilkan notifikasi.
+         * Sistem Single Active Session:
+         * - Heartbeat tiap 10 detik agar device lain tahu sesi ini masih aktif.
+         * - Listener 'kick' untuk menerima sinyal dari device lain yang masuk.
+         * - Hanya cek sesi lain saat tombol PLAY ditekan (bukan saat login).
          */
+        let _heartbeatInterval = null;
+        let _kickRef = null;
+        let _sessionToken = null; // token unik per sesi, untuk identifikasi diri sendiri
+
         async function setupPresence(user, nickname) {
             clearPresence(); // bersihkan listener lama jika ada
 
             const uid = user.uid;
             _presenceRef = db.ref(`presence/${uid}`);
 
+            // Token unik per sesi — mencegah device mendeteksi diri sendiri sebagai "device lain"
+            _sessionToken = Date.now().toString(36) + Math.random().toString(36).slice(2);
+
             // Deteksi jenis perangkat
             const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
             const deviceLabel = isMobile ? '📱 HP/Tablet' : '💻 PC/Laptop';
 
-            // ── Cek apakah sudah ada sesi lain yang aktif ──
-            try {
-                const snap = await _presenceRef.get();
-                if (snap.exists()) {
-                    const other = snap.val();
-                    // Tampilkan peringatan sesi lain (hanya jika data ada)
-                    showOnlineElsewhereNotification(other.device || 'perangkat lain', other.nickname || nickname);
-                }
-            } catch(e) { /* network issue — abaikan */ }
-
             // ── Pasang listener koneksi Firebase ──
             // Saat terkoneksi: tulis presence + jadwalkan hapus saat disconnect
             _connectedRef = db.ref('.info/connected');
-            _connectedRef.on('value', (snap) => {
+            _connectedRef.on('value', async (snap) => {
                 if (snap.val() !== true) return;
                 _presenceRef.onDisconnect().remove();
-                _presenceRef.set({
+                await _presenceRef.set({
                     nickname,
-                    device:   deviceLabel,
-                    loginAt:  Date.now(),
-                    online:   true,
+                    device:    deviceLabel,
+                    loginAt:   Date.now(),
+                    heartbeat: Date.now(),
+                    online:    true,
+                    token:     _sessionToken,
                 });
+            });
+
+            // ── Heartbeat: update tiap 10 detik agar sesi ini dianggap "hidup" ──
+            if (_heartbeatInterval) clearInterval(_heartbeatInterval);
+            _heartbeatInterval = setInterval(() => {
+                if (_presenceRef && currentUser) {
+                    _presenceRef.update({ heartbeat: Date.now() }).catch(() => {});
+                }
+            }, 10000);
+
+            // ── Listener kick: terima sinyal dari device lain yang mengambil alih sesi ──
+            _kickRef = db.ref(`kick/${uid}`);
+            _kickRef.on('value', (snap) => {
+                if (!snap.exists()) return;
+                const data = snap.val();
+                // Abaikan jika sinyal ini berasal dari diri sendiri
+                if (!data || data.targetToken !== _sessionToken) return;
+                // Hapus node kick agar tidak terpanggil berulang
+                snap.ref.remove().catch(() => {});
+                // Tampilkan notif dan paksa logout
+                _showKickedOutModal(data.byDevice || 'perangkat lain');
             });
         }
 
@@ -4024,8 +4096,16 @@
             }
         }
 
-        /** Hapus presence dan lepas listener saat logout/tutup. */
+        /** Hapus presence dan lepas semua listener saat logout/tutup. */
         function clearPresence() {
+            if (_heartbeatInterval) {
+                clearInterval(_heartbeatInterval);
+                _heartbeatInterval = null;
+            }
+            if (_kickRef) {
+                _kickRef.off();
+                _kickRef = null;
+            }
             if (_connectedRef) {
                 _connectedRef.off();
                 _connectedRef = null;
@@ -4035,6 +4115,7 @@
                 _presenceRef.remove().catch(() => {});
                 _presenceRef = null;
             }
+            _sessionToken = null;
         }
 
         /** Pasang real-time listeners untuk profile (rankData, stats, history). */
@@ -4143,46 +4224,391 @@
         }
 
         /**
-         * Tampilkan toast peringatan akun sedang online di device lain.
-         * Toast menutup otomatis setelah 8 detik.
+        /**
+         * Cek apakah ada sesi aktif di device lain — dipanggil saat PLAY ditekan.
+         * Jika ada dan masih fresh (heartbeat < 15 detik lalu) → tampilkan modal blokir.
+         * Return true jika boleh lanjut, false jika diblokir.
          */
-        function showOnlineElsewhereNotification(device, nickname) {
-            // Hapus notifikasi lama jika ada
-            const old = document.getElementById('online-elsewhere-notif');
+        async function checkSingleSessionBeforePlay() {
+            if (!currentUser || !db) return true; // tidak bisa cek → izinkan
+            const uid = currentUser.uid;
+
+            let presenceSnap, pwSnap;
+            try {
+                [presenceSnap, pwSnap] = await Promise.all([
+                    db.ref(`presence/${uid}`).get(),
+                    db.ref(`users/${uid}/passwordChangedAt`).get(),
+                ]);
+            } catch(e) {
+                return true; // network error → izinkan daripada blokir
+            }
+
+            // Tidak ada sesi lain
+            if (!presenceSnap.exists()) return true;
+
+            const other = presenceSnap.val();
+
+            // Abaikan jika sesi yang terdeteksi adalah diri sendiri
+            if (other.token && other.token === _sessionToken) return true;
+
+            const now = Date.now();
+            const heartbeat = other.heartbeat || other.loginAt || 0;
+            const isStale = (now - heartbeat) > 15000; // stale jika > 15 detik tanpa heartbeat
+
+            // Sesi lain sudah tidak aktif (tab ditutup, device mati, dll) → boleh lanjut
+            if (isStale) return true;
+
+            // ── Cek apakah password diganti setelah sesi lain login ──
+            if (pwSnap.exists()) {
+                const pwChangedAt = pwSnap.val();
+                const otherLoginAt = other.loginAt || 0;
+                if (pwChangedAt > otherLoginAt) {
+                    // Password diganti setelah device lain login → device lain perlu re-auth
+                    // Device ini (yang baru ganti password) boleh lanjut
+                    return true;
+                }
+            }
+
+            // ── Ada sesi aktif yang masih fresh → tampilkan modal blokir ──
+            _showActiveElsewhereModal(other.device || 'perangkat lain');
+            return false;
+        }
+
+        /**
+         * Modal: akun sedang aktif di device lain.
+         * Polling otomatis tiap 5 detik — Device B HANYA bisa masuk setelah
+         * Device A benar-benar offline (heartbeat stale > 15 detik).
+         * Tidak ada opsi "paksa masuk".
+         */
+        function _showActiveElsewhereModal(otherDevice) {
+            // Hapus modal lama + hentikan polling lama jika ada
+            const old = document.getElementById('_sas-modal');
+            if (old) old.remove();
+            if (window._sasPollingTimer) { clearInterval(window._sasPollingTimer); window._sasPollingTimer = null; }
+
+            const overlay = document.createElement('div');
+            overlay.id = '_sas-modal';
+            overlay.style.cssText = `
+                position:fixed; inset:0; background:rgba(0,0,0,0.82);
+                display:flex; align-items:center; justify-content:center;
+                z-index:999999; animation:fadeIn 0.25s ease;
+            `;
+            overlay.innerHTML = `
+                <div style="
+                    background:linear-gradient(135deg,#1a1a2e,#16213e);
+                    border:2px solid rgba(255,120,0,0.6);
+                    border-radius:20px; padding:32px 28px; max-width:370px; width:90%;
+                    text-align:center; color:#fff; box-shadow:0 12px 40px rgba(0,0,0,0.7);
+                    animation:scaleIn 0.3s ease;
+                ">
+                    <div style="font-size:2.5em; margin-bottom:8px;">🔒</div>
+                    <div style="font-size:1.15em; font-weight:bold; margin-bottom:10px; color:#ff9800;">
+                        Akun Sedang Digunakan
+                    </div>
+                    <div style="font-size:0.87em; opacity:0.88; line-height:1.6; margin-bottom:6px;">
+                        Akun ini sedang aktif di <b>${escHtml(otherDevice)}</b>.<br>
+                        Kamu tidak bisa bermain dari dua perangkat sekaligus.
+                    </div>
+                    <div id="_sas-status" style="
+                        font-size:0.82em; color:#ffb74d; margin:14px 0; min-height:22px;
+                    ">⏳ Menunggu perangkat lain offline... (cek ulang dalam <span id="_sas-countdown">5</span>s)</div>
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        <button id="_sas-manual-btn" style="
+                            padding:11px; border-radius:10px;
+                            border:1px solid rgba(255,255,255,0.2);
+                            cursor:pointer; background:rgba(255,255,255,0.1);
+                            color:#fff; font-size:0.88em;
+                        ">🔄 Cek Sekarang</button>
+                        <button id="_sas-logout-btn" style="
+                            padding:11px; border-radius:10px;
+                            border:2px solid rgba(255,255,255,0.18);
+                            background:transparent; color:rgba(255,255,255,0.65);
+                            font-size:0.85em; cursor:pointer;
+                        ">🚪 Logout dari Akun Ini</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+
+            // ── Polling otomatis tiap 5 detik ──
+            let _cd = 5;
+
+            async function _runCheck() {
+                if (!document.getElementById('_sas-modal')) return;
+                const statusDiv = document.getElementById('_sas-status');
+                if (statusDiv) statusDiv.textContent = '🔍 Mengecek status perangkat lain...';
+
+                const allowed = await checkSingleSessionBeforePlay();
+                if (!document.getElementById('_sas-modal')) return;
+
+                if (allowed) {
+                    if (window._sasPollingTimer) { clearInterval(window._sasPollingTimer); window._sasPollingTimer = null; }
+                    overlay.remove();
+                    _proceedToMatchmaking();
+                } else {
+                    _cd = 5;
+                    const statusDiv2 = document.getElementById('_sas-status');
+                    if (statusDiv2) statusDiv2.innerHTML = `⏳ Perangkat lain masih aktif. Cek ulang dalam <span id="_sas-countdown">${_cd}</span>s`;
+                }
+            }
+
+            // Tick tiap 1 detik untuk countdown visual
+            window._sasPollingTimer = setInterval(() => {
+                if (!document.getElementById('_sas-modal')) {
+                    clearInterval(window._sasPollingTimer);
+                    window._sasPollingTimer = null;
+                    return;
+                }
+                _cd--;
+                const cdEl = document.getElementById('_sas-countdown');
+                if (cdEl) cdEl.textContent = Math.max(0, _cd);
+                if (_cd <= 0) { _cd = 5; _runCheck(); }
+            }, 1000);
+
+            // Tombol: cek manual
+            document.getElementById('_sas-manual-btn').onclick = () => { _cd = 1; };
+
+            // Tombol: logout
+            document.getElementById('_sas-logout-btn').onclick = () => {
+                if (window._sasPollingTimer) { clearInterval(window._sasPollingTimer); window._sasPollingTimer = null; }
+                overlay.remove();
+                doLogout();
+            };
+        }
+
+        /** Lanjutkan ke halaman matchmaking setelah cek sesi selesai. */
+        function _proceedToMatchmaking() {
+            try {
+                soundEffects.bgMusic.currentTime = 0;
+                soundEffects.bgMusic.play().catch(() => {});
+            } catch(e) {}
+            const preScreen = document.getElementById('pre-loading-screen');
+            preScreen.classList.add('hidden');
+            setTimeout(() => {
+                preScreen.style.display = 'none';
+                document.getElementById('matchmaking-screen').classList.add('active');
+                document.getElementById('profile-badge').style.display = 'block';
+            }, 500);
+        }
+
+
+        /**
+         * Modal: akun ini di-kick oleh device lain yang masuk.
+         * (Saat ini tidak digunakan karena "paksa masuk" dihapus,
+         *  tapi dipertahankan untuk kemungkinan penggunaan di masa depan.)
+         */
+        function _showKickedOutModal(byDevice) {
+            stopClientKeepAlive();
+            if (ws) {
+                ws.onclose = null; ws.onerror = null; ws.onmessage = null;
+                try { ws.close(); } catch(e) {}
+                ws = null;
+            }
+            const old = document.getElementById('_kicked-modal');
+            if (old) old.remove();
+            const overlay = document.createElement('div');
+            overlay.id = '_kicked-modal';
+            overlay.style.cssText = `
+                position:fixed; inset:0; background:rgba(0,0,0,0.85);
+                display:flex; align-items:center; justify-content:center;
+                z-index:999999; animation:fadeIn 0.25s ease;
+            `;
+            overlay.innerHTML = `
+                <div style="
+                    background:linear-gradient(135deg,#1a1a2e,#16213e);
+                    border:2px solid rgba(229,57,53,0.7);
+                    border-radius:20px; padding:32px 28px; max-width:360px; width:90%;
+                    text-align:center; color:#fff; box-shadow:0 12px 40px rgba(0,0,0,0.7);
+                    animation:scaleIn 0.3s ease;
+                ">
+                    <div style="font-size:2.5em; margin-bottom:8px;">⛔</div>
+                    <div style="font-size:1.2em; font-weight:bold; margin-bottom:10px; color:#ef5350;">
+                        Sesi Diambil Alih
+                    </div>
+                    <div style="font-size:0.88em; opacity:0.88; line-height:1.6; margin-bottom:22px;">
+                        Akun ini sekarang digunakan di <b>${escHtml(byDevice)}</b>.<br>
+                        Kamu telah dikeluarkan dari sesi ini.
+                    </div>
+                    <button onclick="document.getElementById('_kicked-modal').remove(); doLogout();"
+                        style="padding:11px 28px; border-radius:10px; border:none; cursor:pointer;
+                               background:linear-gradient(135deg,#e53935,#c62828); color:#fff;
+                               font-size:0.95em; font-weight:bold;">
+                        🚪 Ke Halaman Login
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
+
+        /**
+         * Modal: password diganti oleh Device A, Device B perlu verifikasi.
+         *
+         * SKENARIO 1 — Device B masukkan sandi baru dengan BENAR:
+         *   Firebase re-auth berhasil → cek apakah Device A masih online:
+         *   - Device A masih online → tampilkan modal "Akun Sedang Digunakan" (polling)
+         *   - Device A sudah offline → langsung lanjut ke matchmaking
+         *
+         * SKENARIO 2 — Device B selalu SALAH masukkan sandi baru:
+         *   Tampilkan pesan error + tombol "Logout & Ganti Akun"
+         *   agar Device B bisa login dengan akun berbeda.
+         *
+         * Percobaan salah dibatasi 5x sebelum cooldown 30 detik.
+         */
+        function _showPasswordChangedModal() {
+            const old = document.getElementById('_pwchg-modal');
             if (old) old.remove();
 
-            const notif = document.createElement('div');
-            notif.id = 'online-elsewhere-notif';
-            notif.style.cssText = `
-                position:fixed; top:20px; left:50%; transform:translateX(-50%);
-                background:linear-gradient(135deg,#ff6f00,#e53935);
-                color:white; padding:14px 22px; border-radius:14px;
-                box-shadow:0 6px 24px rgba(0,0,0,0.45); z-index:99999;
-                font-size:0.95em; text-align:center; max-width:340px; width:90%;
-                animation:slideInRight 0.4s ease;
-            `;
-            notif.innerHTML = `
-                <div style="font-size:1.3em; margin-bottom:4px;">⚠️ Akun Aktif di Tempat Lain</div>
-                <div style="font-weight:normal; opacity:0.92; font-size:0.88em;">
-                    <b>${escHtml(nickname)}</b> terdeteksi sedang online di <b>${escHtml(device)}</b>.<br>
-                    Sesi lama akan digantikan oleh login ini.
-                </div>
-                <button onclick="playSound('button');document.getElementById('online-elsewhere-notif').remove()"
-                    style="margin-top:10px; padding:5px 18px; background:rgba(255,255,255,0.25);
-                           border:1px solid rgba(255,255,255,0.5); border-radius:8px;
-                           color:white; cursor:pointer; font-size:0.85em;">
-                    OK, Mengerti
-                </button>
-            `;
-            document.body.appendChild(notif);
+            let _failCount = 0;
+            let _cooldownTimer = null;
 
-            // Auto-tutup setelah 8 detik
-            setTimeout(() => {
-                if (notif.parentElement) {
-                    notif.style.animation = 'slideOutRight 0.4s ease forwards';
-                    setTimeout(() => notif.remove(), 400);
+            const overlay = document.createElement('div');
+            overlay.id = '_pwchg-modal';
+            overlay.style.cssText = `
+                position:fixed; inset:0; background:rgba(0,0,0,0.85);
+                display:flex; align-items:center; justify-content:center;
+                z-index:999999; animation:fadeIn 0.25s ease;
+            `;
+            overlay.innerHTML = `
+                <div style="
+                    background:linear-gradient(135deg,#1a1a2e,#16213e);
+                    border:2px solid rgba(255,193,7,0.7);
+                    border-radius:20px; padding:32px 28px; max-width:380px; width:90%;
+                    text-align:center; color:#fff; box-shadow:0 12px 40px rgba(0,0,0,0.7);
+                    animation:scaleIn 0.3s ease;
+                ">
+                    <div style="font-size:2.5em; margin-bottom:8px;">🔑</div>
+                    <div style="font-size:1.15em; font-weight:bold; margin-bottom:8px; color:#ffc107;">
+                        Kata Sandi Telah Diubah
+                    </div>
+                    <div style="font-size:0.86em; opacity:0.85; line-height:1.6; margin-bottom:18px;">
+                        Kata sandi akun ini telah diubah dari perangkat lain.<br>
+                        Masukkan kata sandi terbaru untuk melanjutkan.
+                    </div>
+                    <input id="_pwchg-input" type="password" placeholder="Kata sandi baru..."
+                        style="width:100%; padding:11px 14px; border-radius:10px;
+                               border:1.5px solid rgba(255,255,255,0.25); background:rgba(255,255,255,0.08);
+                               color:#fff; font-size:0.95em; outline:none; box-sizing:border-box; margin-bottom:8px;"
+                    />
+                    <div id="_pwchg-msg" style="font-size:0.82em; min-height:20px; margin-bottom:14px; color:#ef5350;"></div>
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        <button id="_pwchg-submit-btn" style="
+                            padding:11px; border-radius:10px; border:none; cursor:pointer;
+                            background:linear-gradient(135deg,#f9a825,#f57f17);
+                            color:#fff; font-size:0.95em; font-weight:bold;
+                        ">🔓 Masuk dengan Sandi Baru</button>
+                        <button id="_pwchg-logout-btn" style="
+                            padding:11px; border-radius:10px;
+                            border:2px solid rgba(255,255,255,0.18);
+                            background:transparent; color:rgba(255,255,255,0.65);
+                            font-size:0.85em; cursor:pointer;
+                        ">🚪 Logout & Ganti Akun</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            const inputEl  = () => document.getElementById('_pwchg-input');
+            const msgEl    = () => document.getElementById('_pwchg-msg');
+            const submitBtn= () => document.getElementById('_pwchg-submit-btn');
+
+            // Tekan Enter untuk submit
+            document.getElementById('_pwchg-input').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') document.getElementById('_pwchg-submit-btn').click();
+            });
+
+            function _setCooldown(seconds) {
+                if (_cooldownTimer) clearInterval(_cooldownTimer);
+                let remaining = seconds;
+                const btn = submitBtn();
+                if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; btn.style.cursor = 'not-allowed'; }
+                _cooldownTimer = setInterval(() => {
+                    remaining--;
+                    const m = msgEl();
+                    if (m) m.innerHTML = `<span style="color:#ffb74d;">⏳ Terlalu banyak percobaan. Coba lagi dalam ${remaining}s</span>`;
+                    if (remaining <= 0) {
+                        clearInterval(_cooldownTimer);
+                        _cooldownTimer = null;
+                        _failCount = 0;
+                        const b = submitBtn();
+                        if (b) { b.disabled = false; b.style.opacity = '1'; b.style.cursor = 'pointer'; }
+                        const m2 = msgEl();
+                        if (m2) m2.textContent = '';
+                    }
+                }, 1000);
+            }
+
+            // Tombol: submit sandi baru
+            document.getElementById('_pwchg-submit-btn').onclick = async () => {
+                if (_cooldownTimer) return;
+                const pw = (inputEl() ? inputEl().value.trim() : '');
+                if (!pw) {
+                    const m = msgEl(); if (m) m.textContent = '⚠️ Masukkan kata sandi terlebih dahulu.';
+                    return;
                 }
-            }, 8000);
+                const btn = submitBtn();
+                if (btn) { btn.disabled = true; btn.textContent = '⏳ Memverifikasi...'; }
+
+                try {
+                    const user = firebase.auth().currentUser;
+                    if (!user) throw new Error('no-user');
+                    const credential = firebase.auth.EmailAuthProvider.credential(user.email, pw);
+                    await user.reauthenticateWithCredential(credential);
+
+                    // ── Re-auth BERHASIL ──
+                    // Perbarui sessionToken & presence (sandi baru valid, sesi ini sah)
+                    if (_presenceRef && _sessionToken) {
+                        await _presenceRef.update({ heartbeat: Date.now(), token: _sessionToken });
+                    }
+
+                    overlay.remove();
+
+                    // Cek apakah Device A masih online
+                    const allowed = await checkSingleSessionBeforePlay();
+                    if (allowed) {
+                        // Device A sudah offline → langsung matchmaking
+                        _proceedToMatchmaking();
+                    } else {
+                        // Device A masih online → tampilkan modal tunggu polling
+                        // (checkSingleSessionBeforePlay sudah memanggil _showActiveElsewhereModal)
+                    }
+
+                } catch (err) {
+                    // ── Re-auth GAGAL (sandi salah) ──
+                    _failCount++;
+                    const m = msgEl();
+                    const b = submitBtn();
+                    if (b) { b.disabled = false; b.textContent = '🔓 Masuk dengan Sandi Baru'; }
+
+                    const sisaCoba = 5 - _failCount;
+                    if (_failCount >= 5) {
+                        // Terlalu banyak salah → cooldown 30 detik
+                        if (m) m.innerHTML = `<span style="color:#ef5350;">❌ Kata sandi salah. Terlalu banyak percobaan.</span>`;
+                        _setCooldown(30);
+                    } else if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+                        if (m) m.innerHTML = `<span style="color:#ef5350;">❌ Kata sandi salah. Sisa percobaan: <b>${sisaCoba}</b></span>`;
+                    } else if (err.message === 'no-user') {
+                        if (m) m.innerHTML = `<span style="color:#ef5350;">❌ Sesi tidak valid. Silakan logout dan login ulang.</span>`;
+                    } else {
+                        if (m) m.textContent = '❌ Gagal verifikasi. Coba lagi.';
+                    }
+                }
+            };
+
+            // Tombol: logout & ganti akun
+            document.getElementById('_pwchg-logout-btn').onclick = () => {
+                if (_cooldownTimer) clearInterval(_cooldownTimer);
+                overlay.remove();
+                doLogout();
+                // doLogout() → onAuthStateChanged(null) → showAuthScreen() otomatis
+                // User bisa login dengan akun baru/berbeda dari halaman login
+            };
+        }
+
+        // showOnlineElsewhereNotification dipertahankan tapi sekarang tidak dipakai oleh setupPresence
+        // (fungsi ini tidak dihapus untuk backward-compat jika ada pemanggil lain)
+        function showOnlineElsewhereNotification(device, nickname) {
+            // Tidak lagi digunakan — cek sesi dilakukan saat PLAY ditekan
         }
 
         function showChangePasswordModal() {
@@ -4229,6 +4655,12 @@
                 const credential = firebase.auth.EmailAuthProvider.credential(user.email, oldPass);
                 await user.reauthenticateWithCredential(credential);
                 await user.updatePassword(newPass);
+
+                // Simpan timestamp ganti password ke DB
+                // Device lain yang sudah login sebelum waktu ini akan diminta login ulang
+                try {
+                    await db.ref(`users/${user.uid}/passwordChangedAt`).set(Date.now());
+                } catch(e) {}
 
                 // Bersihkan input setelah berhasil
                 document.getElementById('cp-old-pass').value = '';
@@ -5281,20 +5713,33 @@
             }, 800);
         }
 
-        function goToMatchmaking() {
-            // Try to start bg music on user gesture
-            try {
-                soundEffects.bgMusic.currentTime = 0;
-                soundEffects.bgMusic.play().catch(() => {});
-            } catch(e) {}
+        async function goToMatchmaking() {
+            // Cek single-session: jika ada sesi aktif di device lain, tampilkan modal blokir
+            const allowed = await checkSingleSessionBeforePlay();
+            if (!allowed) return; // modal blokir sudah ditampilkan
 
-            const preScreen = document.getElementById('pre-loading-screen');
-            preScreen.classList.add('hidden');
-            setTimeout(() => {
-                preScreen.style.display = 'none';
-                document.getElementById('matchmaking-screen').classList.add('active');
-                document.getElementById('profile-badge').style.display = 'block';
-            }, 500);
+            // Ada pertandingan tertunda? → rejoin sekarang setelah lolos cek sesi
+            if (_pendingRejoin) {
+                const { roomId, playerId, isSpectator } = _pendingRejoin;
+                _pendingRejoin = null;
+                // Reset label tombol PLAY ke semula
+                const playBtn = document.getElementById('btn-play');
+                if (playBtn) playBtn.textContent = '▶ PLAY';
+                const subtitleEl = document.querySelector('.pre-loading-subtitle');
+                if (subtitleEl) {
+                    subtitleEl.style.color = '';
+                    subtitleEl.textContent = 'Kenali budaya Indonesia melalui permainan kartu!';
+                }
+                showPreloadingScreen(false);
+                if (isSpectator) {
+                    setTimeout(() => reconnectAsSpectator(roomId), 500);
+                } else {
+                    setTimeout(() => reconnectToGame(roomId, playerId), 500);
+                }
+                return;
+            }
+
+            _proceedToMatchmaking();
         }
 
         // =============================================
