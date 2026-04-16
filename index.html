@@ -289,7 +289,6 @@
         .game-container {
             display: none;
             min-height: 100vh;
-            height: 100vh;
             flex-direction: column;
             max-width: 1800px;
             margin: 0 auto;
@@ -301,12 +300,11 @@
             display: grid;
             grid-template-columns: 200px 1fr;
             gap: 10px;
-            flex: 1;
+            flex: 0 0 auto;
             margin-bottom: 10px;
             width: 100%;
             box-sizing: border-box;
-            align-items: stretch;
-            min-height: 0;
+            align-items: start;
         }
 
         /* OPPONENTS PANEL */
@@ -315,7 +313,8 @@
             padding: 10px; border-radius: 10px;
             -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
             overflow-y: auto;
-            height: 100%;
+            max-height: calc(100vh - 10px);
+            height: fit-content;
         }
 		
         /* PING PANEL */
@@ -324,7 +323,6 @@
             flex-direction: column;
             gap: 10px;
             align-items: stretch;
-            height: 100%;
         }
         .ping-panel {
             background: rgba(255,255,255,0.1);
@@ -439,7 +437,7 @@
         /* RIGHT PANEL */
         .right-panel {
             display: flex; flex-direction: column; gap: 10px;
-            width: 100%; box-sizing: border-box; flex: 1;
+            width: 100%; box-sizing: border-box; min-height: 600px;
         }
 
         /* TOP CARD AREA */
@@ -650,6 +648,72 @@
             font-size: 0.65em; text-align: center; color: #666;
             margin-top: 4px; padding-top: 4px;
             border-top: 1px solid rgba(0,0,0,0.1);
+        }
+
+        /* ============================================ */
+        /* LAPTOP / DESKTOP: kembalikan ukuran asli     */
+        /* (mobile tetap pakai ukuran index_3)          */
+        /* ============================================ */
+        @media (min-width: 769px) {
+            body {
+                overflow: hidden;
+            }
+            body:has(.game-container.active) {
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
+            }
+            .opponents-panel {
+                max-height: calc(100vh - 10px);
+            }
+            .right-panel {
+                flex: unset;
+                min-height: 600px;
+            }
+            .top-card-area {
+                min-height: 225px;
+                height: 225px;
+            }
+            .top-cards {
+                gap: 10px;
+                min-height: 100px;
+                padding: 2px;
+            }
+            .player-area {
+                flex: unset;
+            }
+            .player-deck-container {
+                min-height: 150px;
+                max-height: 250px;
+            }
+            .player-deck {
+                gap: 10px;
+                padding: 5px;
+                min-height: 140px;
+            }
+            .deck-province-label {
+                font-size: 0.63em;
+                max-width: 108px;
+            }
+            .card {
+                width: 108px; height: 152px;
+                padding: 6px;
+                min-width: 108px; max-width: 108px;
+                min-height: 152px; max-height: 152px;
+            }
+            .card-image {
+                height: 56px;
+                font-size: 2em;
+                margin-bottom: 4px;
+            }
+            .card-name {
+                font-size: 0.75em;
+                line-height: 1.1;
+            }
+            .card-type {
+                font-size: 0.6em;
+                margin-top: 3px;
+                padding-top: 3px;
+            }
         }
 
         /* BUTTONS */
@@ -2446,13 +2510,14 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
 
+        /* Laptop/desktop: body tetap bisa scroll saat game aktif */
         body:has(.game-container.active) {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
             background-image: none !important;
-            overflow: hidden !important;
         }
 
         @media (max-width: 768px) {
+            /* Mobile only: kunci overflow agar zoom JS bisa bekerja */
             body:has(.game-container.active) {
                 width: 100vw !important;
                 height: 100vh !important;
@@ -2639,7 +2704,7 @@
                                 <button class="btn-encyclopedia btn-teman-style" onclick="playSound('button');showTemanScreen()">👥 Teman</button>
                                 <div id="teman-notif-badge"></div>
                             </div>
-                            <button class="btn-encyclopedia btn-kostum-style" onclick="playSound('button');showKostumPicker()">⚔️ Kostum</button>
+                            <button class="btn-encyclopedia btn-kostum-style" onclick="playSound('button');showKostumPicker()">⚔️ Costum</button>
                             <button class="btn-encyclopedia btn-settings-style" onclick="playSound('button');showSettingsScreen()">⚙️ Pengaturan</button>
                             <button class="btn-encyclopedia btn-pengembang-style" onclick="playSound('button');showPengembangScreen()">👨‍💻 Pengembang</button>
                         </div>
@@ -2809,10 +2874,10 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr><td style="text-align:left;padding:4px;">👑 Mythic</td><td>1%</td><td>2%</td><td>2%</td><td>8%</td><td style="color:#ffd700;font-weight:bold;">20%</td></tr>
-                                <tr style="background:rgba(255,255,255,0.05);"><td style="text-align:left;padding:4px;">🔥 Legendary</td><td>4%</td><td>5%</td><td>11%</td><td style="color:#ffd700;font-weight:bold;">14%</td><td>17%</td></tr>
-                                <tr><td style="text-align:left;padding:4px;">👾 Epic</td><td>9%</td><td>12%</td><td style="color:#ffd700;font-weight:bold;">15%</td><td>14%</td><td>14%</td></tr>
-                                <tr style="background:rgba(255,255,255,0.05);"><td style="text-align:left;padding:4px;">💎 Rare+</td><td>12%</td><td style="color:#ffd700;font-weight:bold;">16%</td><td>14%</td><td>13%</td><td>11%</td></tr>
+                                <tr><td style="text-align:left;padding:4px;">👑 Mythic</td><td>1%</td><td>2%</td><td>2%</td><td>7%</td><td style="color:#ffd700;font-weight:bold;">20%</td></tr>
+                                <tr style="background:rgba(255,255,255,0.05);"><td style="text-align:left;padding:4px;">🔥 Legendary</td><td>4%</td><td>5%</td><td>11%</td><td style="color:#ffd700;font-weight:bold;">17%</td><td>17%</td></tr>
+                                <tr><td style="text-align:left;padding:4px;">👾 Epic</td><td>9%</td><td>12%</td><td style="color:#ffd700;font-weight:bold;">15%</td><td>13%</td><td>14%</td></tr>
+                                <tr style="background:rgba(255,255,255,0.05);"><td style="text-align:left;padding:4px;">💎 Rare+</td><td>12%</td><td style="color:#ffd700;font-weight:bold;">16%</td><td>14%</td><td>12%</td><td>11%</td></tr>
                                 <tr><td style="text-align:left;padding:4px;">💙 Rare★</td><td style="color:#ffd700;font-weight:bold;">17%</td><td>14%</td><td>13%</td><td>11%</td><td>10%</td></tr>
                                 <tr style="background:rgba(255,255,255,0.05);"><td style="text-align:left;padding:4px;">💠 Rare</td><td>14%</td><td>13%</td><td>11%</td><td>10%</td><td>9%</td></tr>
                                 <tr><td style="text-align:left;padding:4px;">💚 Uncommon</td><td>13%</td><td>11%</td><td>10%</td><td>9%</td><td>7%</td></tr>
@@ -9039,7 +9104,7 @@
             6:  { rarestar:17, rare:14, uncommon:13, rareplus:12, uncommonplus:11, commonplus:10, epic:9, common:9, legendary:4,  mythic:1  },
             7:  { rareplus:16, rarestar:14, rare:13, uncommon:11, epic:12, uncommonplus:10, commonplus:9, common:8, legendary:5,  mythic:2  },
             8:  { epic:15, rareplus:14, rarestar:13, legendary:11, rare:11, uncommon:10, uncommonplus:9, commonplus:8, common:7, mythic:2  },
-            9:  { legendary:14, epic:14, rareplus:13, rarestar:11, rare:10, uncommon:9, uncommonplus:8, commonplus:7, common:6, mythic:8  },
+            9:  { legendary:17, epic:13, rareplus:12, rarestar:11, rare:10, uncommon:9, uncommonplus:8, commonplus:7, common:6, mythic:7  },
             10: { mythic:20, legendary:17, epic:14, rareplus:11, rarestar:10, rare:9, uncommon:7, uncommonplus:6, commonplus:4, common:2  }
         };
         const DL_LABELS = [
@@ -11075,7 +11140,7 @@
     <!-- KOSTUM: ROLE PICKER POPUP -->
     <div id="kostum-picker-overlay" style="display:none;">
         <div class="kostum-picker-card">
-            <div class="kostum-picker-title">⚔️ Mode Kostum</div>
+            <div class="kostum-picker-title">⚔️ Mode Costum</div>
             <div class="kostum-picker-sub">Pertandingan tidak mempengaruhi rank, riwayat, atau statistik.</div>
             <div class="kostum-role-btns">
                 <button class="kostum-role-btn pemain" onclick="playSound('button');selectKostumRole('pemain')">
@@ -11169,13 +11234,23 @@
         // Turunkan nilai ini → tampilan lebih besar
         const DESIGN_WIDTH = 760;
 
+        // Threshold ketat: hanya aktif di layar benar-benar mobile
+        // Gunakan matchMedia agar konsisten dengan CSS, bukan window.innerWidth
         function isMobile() {
-            return window.innerWidth <= 768;
+            return window.matchMedia('(max-width: 768px) and (pointer: coarse)').matches
+                || (window.innerWidth <= 768 && ('ontouchstart' in window || navigator.maxTouchPoints > 0));
         }
 
         function applyGameZoom() {
             const gc = document.querySelector('.game-container.active');
-            if (!gc || !isMobile()) { resetZoom(); return; }
+
+            // === LAPTOP / DESKTOP: jangan sentuh apapun ===
+            if (!isMobile()) {
+                resetZoom();
+                return;
+            }
+
+            if (!gc) return;
 
             const vw = window.innerWidth;
             const vh = window.innerHeight;
@@ -11184,7 +11259,7 @@
             // Tinggi "virtual" game dalam koordinat desain
             const virtualH = Math.ceil(vh / scale);
 
-            // Set dimensi & transform
+            // Set dimensi & transform (mobile only)
             gc.style.width          = DESIGN_WIDTH + 'px';
             gc.style.minHeight      = virtualH + 'px';
             gc.style.height         = 'auto';
@@ -11195,14 +11270,12 @@
             gc.style.left           = '0';
             gc.style.overflowY      = 'auto';
             gc.style.overflowX      = 'hidden';
-
-            // Setel tinggi scroll area: konten bisa scroll dalam viewport virtual
             gc.style.maxHeight      = virtualH + 'px';
 
-            // Body: kunci ukuran, hilangkan scroll
-            document.body.style.overflow = 'hidden';
-            document.body.style.width    = vw + 'px';
-            document.body.style.height   = vh + 'px';
+            // Body: kunci ukuran & scroll (mobile only)
+            document.body.style.overflow   = 'hidden';
+            document.body.style.width      = vw + 'px';
+            document.body.style.height     = vh + 'px';
             document.body.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
             document.documentElement.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
         }
@@ -11212,9 +11285,10 @@
             if (gc) {
                 ['transform','width','minHeight','height','maxHeight',
                  'position','top','left','overflowY','overflowX',
-                 'transformOrigin'].forEach(p => gc.style[p] = '');
+                 'transformOrigin'].forEach(function(p) { gc.style[p] = ''; });
             }
-            ['overflow','width','height','background'].forEach(p => {
+            // Bersihkan semua inline style yang pernah di-inject ke body
+            ['overflow','width','height','background'].forEach(function(p) {
                 document.body.style[p] = '';
                 document.documentElement.style[p] = '';
             });
@@ -11241,8 +11315,16 @@
         }
 
         window.addEventListener('resize', function() {
-            if (document.querySelector('.game-container.active')) applyGameZoom();
+            if (document.querySelector('.game-container.active')) {
+                // Saat resize ke laptop (misal: DevTools dibuka), langsung reset
+                if (!isMobile()) {
+                    resetZoom();
+                } else {
+                    applyGameZoom();
+                }
+            }
         });
+
         window.addEventListener('orientationchange', function() {
             setTimeout(function() {
                 if (document.querySelector('.game-container.active')) applyGameZoom();
@@ -11275,8 +11357,6 @@
             <button id="btn-avatar-close" onclick="playSound('x');hideAvatarPicker()">✕ Tutup</button>
         </div>
     </div>
-</body>
-</html>
 <script>
 // =============================================
 // FLOATING MATCHMAKING BAR - TIMER
@@ -11339,3 +11419,5 @@ function refreshSettingsLogoutButton() {
     }
 }
 </script>
+</body>
+</html>
